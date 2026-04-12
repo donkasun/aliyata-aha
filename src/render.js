@@ -41,7 +41,7 @@ function drawEyeMarker(ctx, eyeWorld) {
 
 // ─── Main draw function ───────────────────────────────────────────────────────
 
-export function draw(ctx, { state, round, debugMode }) {
+export function draw(ctx, { state, round, debugMode, mode, cameraErrorMsg, handInput }) {
   const { width, height } = ctx.canvas;
 
   // Clear
@@ -49,11 +49,26 @@ export function draw(ctx, { state, round, debugMode }) {
   ctx.fillRect(0, 0, width, height);
 
   if (state === 'IDLE') {
-    ctx.fillStyle    = TEXT_COLOR;
-    ctx.font         = '28px monospace';
     ctx.textAlign    = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('Press SPACE to play', width / 2, height / 2);
+
+    ctx.fillStyle = TEXT_COLOR;
+    ctx.font      = '28px monospace';
+    ctx.fillText('Press SPACE to play', width / 2, height / 2 - 30);
+
+    // Mode selector
+    ctx.font      = '18px monospace';
+    ctx.fillStyle = mode === 'mouse' ? TEXT_COLOR : '#6b7280';
+    ctx.fillText('[M] Mouse',  width / 2 - 80, height / 2 + 20);
+    ctx.fillStyle = mode === 'hand' ? TEXT_COLOR : '#6b7280';
+    ctx.fillText('[C] Camera', width / 2 + 80, height / 2 + 20);
+
+    if (cameraErrorMsg) {
+      ctx.fillStyle = '#ef4444';
+      ctx.font      = '16px monospace';
+      ctx.fillText(cameraErrorMsg, width / 2, height / 2 + 60);
+    }
+
     return;
   }
 
@@ -77,7 +92,8 @@ export function draw(ctx, { state, round, debugMode }) {
     ctx.font         = '20px monospace';
     ctx.textAlign    = 'center';
     ctx.textBaseline = 'top';
-    ctx.fillText('Where is the eye? Press SPACE to confirm.', width / 2, 20);
+    const hint = mode === 'hand' ? 'Where is the eye? Pinch to confirm.' : 'Where is the eye? Press SPACE to confirm.';
+    ctx.fillText(hint, width / 2, 20);
 
     return;
   }

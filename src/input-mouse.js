@@ -1,6 +1,5 @@
-// src/input.js
-
-export function createInput(canvas) {
+// src/input-mouse.js
+export function createMouseInput(canvas) {
   let cursor    = { x: canvas.width / 2, y: canvas.height / 2 };
   let shiftHeld = false;
   const commitCallbacks = [];
@@ -14,9 +13,7 @@ export function createInput(canvas) {
   });
 
   window.addEventListener('keydown', (e) => {
-    if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') {
-      shiftHeld = true;
-    }
+    if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') shiftHeld = true;
     if (e.code === 'Space') {
       e.preventDefault();
       commitCallbacks.forEach((cb) => cb());
@@ -24,9 +21,7 @@ export function createInput(canvas) {
   });
 
   window.addEventListener('keyup', (e) => {
-    if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') {
-      shiftHeld = false;
-    }
+    if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') shiftHeld = false;
   });
 
   return {
