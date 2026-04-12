@@ -6,9 +6,11 @@ export function createInput(canvas) {
   const commitCallbacks = [];
 
   canvas.addEventListener('mousemove', (e) => {
-    const rect = canvas.getBoundingClientRect();
-    cursor.x   = e.clientX - rect.left;
-    cursor.y   = e.clientY - rect.top;
+    const rect   = canvas.getBoundingClientRect();
+    const scaleX = canvas.width  / rect.width;
+    const scaleY = canvas.height / rect.height;
+    cursor.x = (e.clientX - rect.left) * scaleX;
+    cursor.y = (e.clientY - rect.top)  * scaleY;
   });
 
   window.addEventListener('keydown', (e) => {
