@@ -1,40 +1,53 @@
 // src/elephant.js
-// Defines the elephant's SVG geometry in its own coordinate space.
-// viewBox: 0 0 800 500. Elephant faces right, trunk hangs down.
+// Left-facing elephant silhouette, viewBox 0 0 800 500.
+// Reference: chalk-drawing style — large rounded ear, long curling trunk, round body.
 //
-// To update the elephant art: edit BODY_PATH and TRUNK_PATH,
-// then update EYE_SVG to match the new eye location,
-// and update SVG_BOUNDS to the new path extents.
-// Nothing else needs to change.
+// To update the art: edit the paths, then update EYE_SVG to match
+// the new eye centre, and SVG_BOUNDS to the new path extents.
+// board.js and render.js pick up changes automatically.
 
-// Rough silhouette: body + head as one connected shape.
-// Legs are simplified stubs at the bottom.
+// ─── Body (head + torso + 4 legs, trunk and ear are separate paths) ───────────
+// Clockwise from top of head. Elephant faces left.
 export const BODY_PATH = `
-  M 150,390 L 150,360 L 110,360 L 110,246
-  Q 116,178 181,155 Q 250,130 341,124
-  Q 430,118 505,133 Q 562,148 592,184
-  Q 624,221 619,265 Q 616,301 593,321
-  Q 572,337 546,342 L 546,382 L 506,382 L 506,344
-  L 448,344 L 448,382 L 386,382 L 386,344
-  L 325,344 L 325,382 L 265,382 L 265,344
-  Q 224,336 199,312 Q 174,285 162,258 Q 150,231 150,210 Z
+  M 192,108
+  Q 188,86 218,78 Q 278,65 358,68 Q 450,63 538,76
+  Q 625,90 675,132 Q 718,172 722,234
+  Q 728,295 704,334
+  L 704,436 L 660,436 L 658,337
+  L 602,337 L 600,436 L 556,436 L 554,337
+  Q 490,330 430,334
+  L 428,436 L 384,436 L 382,334
+  L 326,334 L 324,436 L 280,436 L 278,334
+  Q 248,324 225,302 Q 200,278 183,246
+  Q 168,218 166,192 Q 163,162 172,140
+  Q 180,120 192,108 Z
 `;
 
-// Trunk hangs from the right side of the head, curving slightly.
+// ─── Ear (large rounded shape, drawn first so body overlaps the join) ─────────
+export const EAR_PATH = `
+  M 218,78
+  Q 272,36 352,28 Q 435,20 468,76
+  Q 502,132 472,188 Q 442,244 375,252
+  Q 308,260 265,220 Q 228,186 226,146
+  Q 222,110 218,78 Z
+`;
+
+// ─── Trunk (from lower face, curves down, tip curls back up) ──────────────────
 export const TRUNK_PATH = `
-  M 614,272 Q 637,308 643,347 Q 649,378 633,393
-  Q 622,403 606,398 Q 589,392 588,373
-  Q 586,350 594,320 Q 602,293 614,268 Z
+  M 166,192
+  Q 136,208 108,246 Q 78,286 68,328
+  Q 56,372 72,402 Q 88,432 120,432
+  Q 154,434 168,408 Q 182,380 168,348
+  Q 156,320 158,290 Q 160,265 172,248
+  Q 172,218 166,192 Z
 `;
 
-// Eye location in SVG space.
-// This is the target the player must place the eye on.
-// Used by board.js to compute trueEyeWorld each round.
-export const EYE_SVG = { x: 578, y: 200 };
+// ─── Eye ──────────────────────────────────────────────────────────────────────
+// Centre of the eye in SVG space — the scoring target the player must memorise.
+export const EYE_SVG = { x: 176, y: 148 };
 
-// Axis-aligned bounding box of all paths in SVG space.
-// Used by board.js to clamp the elephant within the canvas.
-export const SVG_BOUNDS = { minX: 110, maxX: 649, minY: 118, maxY: 403 };
+// ─── Bounds ───────────────────────────────────────────────────────────────────
+// Axis-aligned bounding box of all paths. Used by board.js for clamping.
+export const SVG_BOUNDS = { minX: 56, maxX: 722, minY: 20, maxY: 436 };
 
-// SVG viewBox dimensions.
 export const VIEWBOX = { width: 800, height: 500 };

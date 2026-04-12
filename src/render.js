@@ -1,13 +1,13 @@
 // src/render.js
-import { BODY_PATH, TRUNK_PATH } from './elephant.js';
+import { BODY_PATH, TRUNK_PATH, EAR_PATH } from './elephant.js';
 
 const BG_COLOR   = '#111827';
 const TEXT_COLOR = '#f9fafb';
 
-// Cache Path2D objects at module load — creating them is cheap but
-// re-creating every frame is unnecessary.
+// Cache Path2D objects at module load.
 const bodyPath2D  = new Path2D(BODY_PATH);
 const trunkPath2D = new Path2D(TRUNK_PATH);
+const earPath2D   = new Path2D(EAR_PATH);
 
 // ─── Elephant drawing helper ──────────────────────────────────────────────────
 
@@ -16,17 +16,43 @@ function drawElephant(ctx, transform) {
   ctx.translate(transform.offsetX, transform.offsetY);
   ctx.scale(transform.scale, transform.scale);
 
-  ctx.fillStyle   = '#6b7280';
-  ctx.fill(bodyPath2D);
-  ctx.fill(trunkPath2D);
+  const strokeW = 2 / transform.scale;
 
-  // Keep stroke width at 2px regardless of scale.
+  // Ear first (behind body)
+  ctx.fillStyle   = '#7c8898';
   ctx.strokeStyle = '#374151';
-  ctx.lineWidth   = 2 / transform.scale;
+  ctx.lineWidth   = strokeW;
+  ctx.fill(earPath2D);
+  ctx.stroke(earPath2D);
+
+  // Body + head
+  ctx.fillStyle = '#6b7280';
+  ctx.fill(bodyPath2D);
   ctx.stroke(bodyPath2D);
+
+  // Trunk (in front of body)
+  ctx.fill(trunkPath2D);
   ctx.stroke(trunkPath2D);
 
   ctx.restore();
+}
+
+// ─── Eye marker (shown during REVEAL so player knows what to memorise) ────────
+
+function drawEyeMarker(ctx, eyeWorld) {
+  // Outer circle
+  ctx.beginPath();
+  ctx.arc(eyeWorld.x, eyeWorld.y, 9, 0, Math.PI * 2);
+  ctx.fillStyle   = '#111827';
+  ctx.fill();
+  ctx.strokeStyle = '#f9fafb';
+  ctx.lineWidth   = 2;
+  ctx.stroke();
+  // Inner pupil dot
+  ctx.beginPath();
+  ctx.arc(eyeWorld.x, eyeWorld.y, 3, 0, Math.PI * 2);
+  ctx.fillStyle = '#f9fafb';
+  ctx.fill();
 }
 
 
@@ -50,6 +76,7 @@ export function draw(ctx, { state, round, cursor, debugMode }) {
 
   if (state === 'REVEAL') {
     drawElephant(ctx, round.transform);
+    drawEyeMarker(ctx, round.trueEyeWorld); // show eye — player memorises its position
     return;
   }
 
