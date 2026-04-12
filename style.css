@@ -1,0 +1,15 @@
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: #111827;
+}
+
+canvas {
+  display: block;
+  cursor: none;
+}
