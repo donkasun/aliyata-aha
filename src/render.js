@@ -1,5 +1,5 @@
 // src/render.js
-import { BODY_PATH, TRUNK_PATH, SVG_BOUNDS } from './elephant.js';
+import { BODY_PATH, TRUNK_PATH } from './elephant.js';
 
 const BG_COLOR   = '#111827';
 const TEXT_COLOR = '#f9fafb';
@@ -29,19 +29,6 @@ function drawElephant(ctx, transform) {
   ctx.restore();
 }
 
-// ─── Center transform (Phase 1b only) ────────────────────────────────────────
-// Removed in Task 8 once board.js provides a real per-round transform.
-
-function getCenterTransform(canvas) {
-  const scale    = 1.0;
-  const svgCx    = (SVG_BOUNDS.minX + SVG_BOUNDS.maxX) / 2; // 379.5
-  const svgCy    = (SVG_BOUNDS.minY + SVG_BOUNDS.maxY) / 2; // 260.5
-  return {
-    offsetX: canvas.width  / 2 - svgCx * scale,
-    offsetY: canvas.height / 2 - svgCy * scale,
-    scale,
-  };
-}
 
 // ─── Main draw function ───────────────────────────────────────────────────────
 
@@ -62,8 +49,7 @@ export function draw(ctx, { state, round, cursor, debugMode }) {
   }
 
   if (state === 'REVEAL') {
-    const transform = round?.transform ?? getCenterTransform(ctx.canvas);
-    drawElephant(ctx, transform);
+    drawElephant(ctx, round.transform);
     return;
   }
 
