@@ -42,22 +42,28 @@ export function generateSeed() {
  * to stay fully on-canvas regardless of scale variance.
  */
 export function generateTransform(seed, canvasWidth, canvasHeight) {
-  const rng   = mulberry32(seedToInt(seed));
-  const scale = 0.95 + rng() * 0.10; // [0.95, 1.05]
+  const rng = mulberry32(seedToInt(seed));
 
-  // SVG visual dimensions and center.
-  const svgW  = SVG_BOUNDS.maxX - SVG_BOUNDS.minX; // ~539
-  const svgH  = SVG_BOUNDS.maxY - SVG_BOUNDS.minY; // ~285
-  const svgCx = SVG_BOUNDS.minX + svgW / 2;        // ~379.5
-  const svgCy = SVG_BOUNDS.minY + svgH / 2;        // ~260.5
+  // Image dimensions.
+  const svgW  = SVG_BOUNDS.maxX - SVG_BOUNDS.minX; // 1184
+  const svgH  = SVG_BOUNDS.maxY - SVG_BOUNDS.minY; // 864
+  const svgCx = svgW / 2;                           // 592
+  const svgCy = svgH / 2;                           // 432
 
-  // Base: center of elephant maps to center of canvas.
+  // Fit scale: largest scale that keeps the image fully within the canvas,
+  // reduced to 88% to leave room for jitter.
+  const fitScale = Math.min(canvasWidth / svgW, canvasHeight / svgH) * 0.88;
+
+  // ±5% random scale variation around the fit scale.
+  const scale = fitScale * (0.95 + rng() * 0.10);
+
+  // Base: center of image maps to center of canvas.
   let offsetX = canvasWidth  / 2 - svgCx * scale;
   let offsetY = canvasHeight / 2 - svgCy * scale;
 
-  // Random jitter: ±12% of scaled elephant width, ±8% of scaled height.
-  offsetX += (rng() * 2 - 1) * 0.12 * svgW * scale;
-  offsetY += (rng() * 2 - 1) * 0.08 * svgH * scale;
+  // Random jitter: ±8% of scaled image width, ±5% of scaled image height.
+  offsetX += (rng() * 2 - 1) * 0.08 * svgW * scale;
+  offsetY += (rng() * 2 - 1) * 0.05 * svgH * scale;
 
   // Clamp so the full elephant (including trunk and legs) stays on-canvas.
   const MARGIN = 10;

@@ -1,0 +1,10 @@
+# Editor / IDE
+.cursor/
+.vscode/
+.idea/
+
+# macOS
+.DS_Store
+
+# Node (if ever added)
+node_modules/
