@@ -37,9 +37,13 @@ function transition(newState) {
   }
 
   if (newState === 'RESULT') {
-    round.guess    = input.getCursor();
-    round.distance = 0; // placeholder — real distance added in Task 10
-    console.log(`Distance: ${round.distance}px`);
+    round.guess = input.getCursor();
+
+    const dx        = round.guess.x - round.trueEyeWorld.x;
+    const dy        = round.guess.y - round.trueEyeWorld.y;
+    round.distance  = Math.round(Math.sqrt(dx * dx + dy * dy));
+
+    console.log(`Seed: ${round.seed} | Distance: ${round.distance}px`);
   }
 }
 
