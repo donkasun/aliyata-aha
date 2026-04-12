@@ -89,11 +89,38 @@ export function draw(ctx, { state, round, cursor, debugMode }) {
   }
 
   if (state === 'RESULT') {
+    // Draw elephant at the same transform used during REVEAL.
+    drawElephant(ctx, round.transform);
+
+    // True eye: green dot (where it actually was).
+    const eye = round.trueEyeWorld;
+    ctx.beginPath();
+    ctx.arc(eye.x, eye.y, 10, 0, Math.PI * 2);
+    ctx.fillStyle   = '#22c55e';
+    ctx.fill();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth   = 2;
+    ctx.stroke();
+
+    // Player's guess: red dot (where they placed it).
+    const g = round.guess;
+    ctx.beginPath();
+    ctx.arc(g.x, g.y, 10, 0, Math.PI * 2);
+    ctx.fillStyle   = '#ef4444';
+    ctx.fill();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth   = 2;
+    ctx.stroke();
+
+    // Distance text (top-left).
     ctx.fillStyle    = TEXT_COLOR;
-    ctx.font         = '24px monospace';
-    ctx.textAlign    = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('Press SPACE to play again', width / 2, height / 2);
-    // Result visualization added in Task 11.
+    ctx.font         = 'bold 30px monospace';
+    ctx.textAlign    = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillText(`Distance: ${round.distance}px`, 20, 20);
+
+    // Instruction (below distance).
+    ctx.font = '18px monospace';
+    ctx.fillText('SPACE to play again', 20, 62);
   }
 }
