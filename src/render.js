@@ -54,12 +54,29 @@ export function draw(ctx, { state, round, cursor, debugMode }) {
   }
 
   if (state === 'HIDDEN') {
+    // Instruction text
     ctx.fillStyle    = TEXT_COLOR;
     ctx.font         = '20px monospace';
     ctx.textAlign    = 'center';
     ctx.textBaseline = 'top';
     ctx.fillText('Where is the eye? Press SPACE to confirm.', width / 2, 20);
-    // Cursor added in Task 9.
+
+    // Custom crosshair cursor
+    const { x, y } = cursor;
+    ctx.strokeStyle = '#f9fafb';
+    ctx.lineWidth   = 2;
+
+    ctx.beginPath();
+    ctx.arc(x, y, 10, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(x - 18, y);
+    ctx.lineTo(x + 18, y);
+    ctx.moveTo(x, y - 18);
+    ctx.lineTo(x, y + 18);
+    ctx.stroke();
+
     return;
   }
 
