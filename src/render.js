@@ -54,6 +54,14 @@ export function draw(ctx, { state, round, cursor, debugMode }) {
   }
 
   if (state === 'HIDDEN') {
+    // Debug mode: show elephant faintly so you can verify coordinate accuracy.
+    if (debugMode && round?.transform) {
+      ctx.save();
+      ctx.globalAlpha = 0.25;
+      drawElephant(ctx, round.transform);
+      ctx.restore();
+    }
+
     // Instruction text
     ctx.fillStyle    = TEXT_COLOR;
     ctx.font         = '20px monospace';

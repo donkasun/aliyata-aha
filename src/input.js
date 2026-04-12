@@ -1,11 +1,8 @@
 // src/input.js
-// Phase 1a+: spacebar handler.
-// Phase 1d: mouse position tracking.
-// Phase 1d (Task 12): Shift key debug mode.
 
 export function createInput(canvas) {
-  // Initialise cursor at canvas centre so there's no jump on first frame.
-  let cursor = { x: canvas.width / 2, y: canvas.height / 2 };
+  let cursor    = { x: canvas.width / 2, y: canvas.height / 2 };
+  let shiftHeld = false;
   const commitCallbacks = [];
 
   canvas.addEventListener('mousemove', (e) => {
@@ -15,15 +12,24 @@ export function createInput(canvas) {
   });
 
   window.addEventListener('keydown', (e) => {
+    if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') {
+      shiftHeld = true;
+    }
     if (e.code === 'Space') {
       e.preventDefault();
       commitCallbacks.forEach((cb) => cb());
     }
   });
 
+  window.addEventListener('keyup', (e) => {
+    if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') {
+      shiftHeld = false;
+    }
+  });
+
   return {
     getCursor:   () => ({ ...cursor }),
     onCommit:    (cb) => { commitCallbacks.push(cb); },
-    isDebugMode: () => false, // Shift tracking added in Task 12
+    isDebugMode: () => shiftHeld,
   };
 }
