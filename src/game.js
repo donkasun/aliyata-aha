@@ -31,6 +31,10 @@ function transition(newState) {
 
   state = newState;
 
+  // Hide native cursor during REVEAL and HIDDEN (crosshair replaces it in HIDDEN).
+  // Show it during IDLE and RESULT so the player can interact normally.
+  canvas.style.cursor = (newState === 'REVEAL' || newState === 'HIDDEN') ? 'none' : 'default';
+
   if (newState === 'REVEAL') {
     round = startNewRound();
     revealTimer = setTimeout(() => transition('HIDDEN'), 1000);
