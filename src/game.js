@@ -7,6 +7,7 @@ import { createPlayer }        from './audio.js';
 import { getMessage }          from './messages.js';
 import { getName, setName }    from './name-store.js';
 import { submitScore, subscribeLeaderboard } from './score.js';
+import { track }               from './firebase.js';
 
 const canvas = document.getElementById('game-canvas');
 const ctx    = canvas.getContext('2d');
@@ -142,6 +143,7 @@ function transition(newState) {
 
   if (newState === 'REVEAL') {
     round = startNewRound();
+    track('round_start', { mode });
     // Restart camera if we're in hand mode (was stopped after last RESULT).
     if (mode === 'hand' && handInput) {
       handInput.start().catch(() => {
@@ -167,6 +169,12 @@ function transition(newState) {
     const gy = Math.round((round.guess.y - round.transform.offsetY) / round.transform.scale);
     round.message  = getMessage(round.distance, round.hit, dx, dy, gx, gy);
     if (round.hit) new Audio('sounds/Koha.mp3').play().catch(() => {});
+    track('round_result', {
+      hit:       round.hit,
+      distance:  round.distance,
+      time_taken: Math.round(round.timeTaken * 10) / 10,
+      mode,
+    });
     console.log(`Seed: ${round.seed} | Distance: ${round.distance}px | EYE_SVG: { x: ${gx}, y: ${gy} }`);
 
     // Submit score — prompt for name first if not set.
