@@ -100,14 +100,15 @@ export function draw(ctx, { state, round, debugMode, mode, cameraErrorMsg, handI
     ctx.textAlign    = 'center';
     ctx.textBaseline = 'middle';
 
-    ctx.fillStyle = TEXT_COLOR;
-    ctx.font      = '28px monospace';
+    ctx.fillStyle = '#f59e0b';  // gold
+    ctx.font      = '32px sans-serif';
     ctx.fillText('Aliyata Asa Thabeema', width / 2, height / 2 - 30);
 
     // Mode selector — pressing M or C selects mode and starts immediately
     ctx.font      = '18px monospace';
-    ctx.fillStyle = TEXT_COLOR;
+    ctx.fillStyle = mode === 'mouse' ? '#f59e0b' : '#78350f';
     ctx.fillText('[M] Mouse',  width / 2 - 80, height / 2 + 20);
+    ctx.fillStyle = mode === 'hand' ? '#f59e0b' : '#78350f';
     ctx.fillText('[C] Camera', width / 2 + 80, height / 2 + 20);
 
     if (cameraErrorMsg) {
