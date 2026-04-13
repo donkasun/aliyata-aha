@@ -41,7 +41,9 @@ btnPlay.addEventListener('click', () => {
 });
 document.getElementById('btn-prev').addEventListener('click', () => { player.prev(); updateTrackName(); });
 document.getElementById('btn-next').addEventListener('click', () => { player.next(); updateTrackName(); });
-document.getElementById('vol-slider').addEventListener('input', (e) => {
+const volSlider = document.getElementById('vol-slider');
+volSlider.value = Math.round(player.getVolume() * 100); // sync slider to actual default
+volSlider.addEventListener('input', (e) => {
   player.setVolume(e.target.value / 100);
 });
 
