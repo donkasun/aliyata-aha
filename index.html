@@ -8,6 +8,13 @@
 </head>
 <body>
   <canvas id="game-canvas" width="1024" height="640"></canvas>
+  <video id="hand-feed" style="display:none" playsinline></video>
+
+  <!-- MediaPipe loaded as classic scripts (exposes window.Hands, window.Camera).
+       Must come before the ES module so globals are available when game.js runs. -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+
   <script type="module" src="src/game.js"></script>
 </body>
 </html>

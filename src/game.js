@@ -1,5 +1,6 @@
 // src/game.js
 import { createMouseInput } from './input-mouse.js';
+import { createHandInput }  from './input-hand.js';
 import { draw }             from './render.js';
 import { generateSeed, generateTransform, getEyeWorld } from './board.js';
 
@@ -92,7 +93,18 @@ window.addEventListener('keydown', (e) => {
 });
 
 async function switchToHand() {
-  // handInput is created and wired in Task 2. This stub exists so M/C keys work now.
+  if (!handInput) {
+    handInput = createHandInput(canvas);
+    handInput.onCommit(() => { if (mode === 'hand') handleCommit(); });
+  }
+  try {
+    await handInput.start();
+    mode  = 'hand';
+    input = handInput;
+  } catch {
+    cameraErrorMsg = 'Camera unavailable';
+    setTimeout(() => { cameraErrorMsg = ''; }, 3000);
+  }
 }
 
 // ─── Render loop ──────────────────────────────────────────────────────────────
