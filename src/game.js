@@ -142,10 +142,19 @@ function transition(newState) {
 
   if (newState === 'REVEAL') {
     round = startNewRound();
+    // Restart camera if we're in hand mode (was stopped after last RESULT).
+    if (mode === 'hand' && handInput) {
+      handInput.start().catch(() => {
+        cameraErrorMsg = 'Camera unavailable';
+        setTimeout(() => { cameraErrorMsg = ''; }, 3000);
+      });
+    }
     revealTimer = setTimeout(() => transition('HIDDEN'), 1000);
   }
 
   if (newState === 'RESULT') {
+    // Stop camera immediately — no need for it until the next round starts.
+    if (mode === 'hand' && handInput) handInput.stop();
     round.guess     = input.getCursor();
     round.timeTaken = (Date.now() - hiddenAt) / 1000;
 
@@ -189,6 +198,7 @@ window.addEventListener('keydown', (e) => {
   }
   if (state !== 'IDLE' && state !== 'RESULT') return;
   if (e.code === 'KeyM') {
+    if (mode === 'hand' && handInput) handInput.stop();
     mode  = 'mouse';
     input = mouseInput;
     transition('REVEAL');
