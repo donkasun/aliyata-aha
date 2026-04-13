@@ -6,11 +6,11 @@ const TEXT_COLOR = '#f9fafb';
 
 // ─── Button layout helpers (exported for hit-testing in game.js) ──────────────
 
-export function idleButtonLayout(width, height) {
+export function idleButtonLayout(width, height, isMobile = false) {
   const cx = width / 2, cy = height / 2;
   const W = 130, H = 40;
   return [
-    { id: 'mouse',  label: '[M] Mouse',  x: cx - 80 - W / 2, y: cy + 20 - H / 2, w: W, h: H },
+    { id: 'mouse',  label: isMobile ? '[T] Tap' : '[M] Mouse',  x: cx - 80 - W / 2, y: cy + 20 - H / 2, w: W, h: H },
     { id: 'camera', label: '[C] Camera', x: cx + 80 - W / 2, y: cy + 20 - H / 2, w: W, h: H },
   ];
 }
@@ -152,7 +152,7 @@ function drawLeaderboard(ctx, leaderboard, canvasW, canvasH) {
 
 // ─── Main draw function ───────────────────────────────────────────────────────
 
-export function draw(ctx, { state, round, mode, cameraErrorMsg, handInput, leaderboard = [], showLeaderboard = false }) {
+export function draw(ctx, { state, round, mode, cameraErrorMsg, handInput, leaderboard = [], showLeaderboard = false, isMobile = false }) {
   const { width, height } = ctx.canvas;
 
   // Clear
@@ -167,8 +167,8 @@ export function draw(ctx, { state, round, mode, cameraErrorMsg, handInput, leade
     ctx.font      = '32px sans-serif';
     ctx.fillText('Aliyata Asa Thabeema', width / 2, height / 2 - 30);
 
-    // Mode selector buttons — clickable or keyboard [M] / [C]
-    for (const btn of idleButtonLayout(width, height)) {
+    // Mode selector buttons — clickable or keyboard [M]/[T] / [C]
+    for (const btn of idleButtonLayout(width, height, isMobile)) {
       const active = (btn.id === 'mouse' && mode === 'mouse') || (btn.id === 'camera' && mode === 'hand');
       // Outline
       ctx.beginPath();

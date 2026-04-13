@@ -9,8 +9,9 @@ import { getName, setName }    from './name-store.js';
 import { submitScore, subscribeLeaderboard, isNameTaken } from './score.js';
 import { track }               from './firebase.js';
 
-const canvas = document.getElementById('game-canvas');
-const ctx    = canvas.getContext('2d');
+const canvas   = document.getElementById('game-canvas');
+const ctx      = canvas.getContext('2d');
+const isMobile = window.matchMedia('(pointer: coarse)').matches;
 
 // ─── Music ───────────────────────────────────────────────────────────────────
 const player = createPlayer();
@@ -191,11 +192,16 @@ subscribeLeaderboard((rows) => {
 
 // ─── HTML state overlays (status bar + result actions) ────────────────────────
 
-const gameStatus    = document.getElementById('game-status');
-const statusLabel   = document.getElementById('status-label');
-const statusSub     = document.getElementById('status-sub');
-const statusMsg     = document.getElementById('status-msg');
-const resultActions = document.getElementById('result-actions');
+const gameStatus      = document.getElementById('game-status');
+const statusLabel     = document.getElementById('status-label');
+const statusSub       = document.getElementById('status-sub');
+const statusMsg       = document.getElementById('status-msg');
+const resultActions   = document.getElementById('result-actions');
+const tapConfirmWrap  = document.getElementById('tap-confirm-wrap');
+
+document.getElementById('tap-confirm').addEventListener('click', () => {
+  if (state === 'HIDDEN') handleCommit();
+});
 
 function syncHtmlOverlays() {
   const isHidden = state === 'HIDDEN';
@@ -204,12 +210,19 @@ function syncHtmlOverlays() {
   gameStatus.classList.toggle('hidden', !isHidden && !isResult);
   resultActions.classList.toggle('hidden', !isResult);
 
+  // Show tap confirm only on mobile in HIDDEN state (tap mode, not hand/camera)
+  tapConfirmWrap.classList.toggle('hidden', !(isHidden && isMobile && mode === 'mouse'));
+
   if (isHidden) {
     gameStatus.classList.add('mode-hint');
     statusLabel.className   = 'status-hint';
-    statusLabel.textContent = mode === 'hand'
-      ? 'Where is the eye? Pinch to confirm.'
-      : 'Where is the eye? Click or SPACE to confirm.';
+    if (mode === 'hand') {
+      statusLabel.textContent = 'Where is the eye? Pinch to confirm.';
+    } else if (isMobile) {
+      statusLabel.textContent = 'Tap where the eye was, then press Drop Eye.';
+    } else {
+      statusLabel.textContent = 'Where is the eye? Click or SPACE to confirm.';
+    }
     statusSub.textContent = '';
     statusMsg.textContent = '';
   } else if (isResult && round) {
@@ -388,10 +401,14 @@ function hitButton(buttons, px, py) {
 }
 
 canvas.addEventListener('click', (e) => {
+  // On touch devices the touchstart/touchmove already set position;
+  // commit is via the explicit #tap-confirm button — not canvas click.
+  if (isMobile && mode === 'mouse') return;
+
   const { x, y } = canvasCoords(e);
 
   if (state === 'IDLE') {
-    const hit = hitButton(idleButtonLayout(canvas.width, canvas.height), x, y);
+    const hit = hitButton(idleButtonLayout(canvas.width, canvas.height, isMobile), x, y);
     if (hit === 'mouse') {
       if (mode === 'hand' && handInput) handInput.stop();
       mode = 'mouse'; input = mouseInput; transition('REVEAL');
@@ -402,7 +419,7 @@ canvas.addEventListener('click', (e) => {
   }
 
   if (state === 'HIDDEN') {
-    // Clicking anywhere commits the guess (alternative to SPACE / pinch).
+    // Desktop: clicking anywhere on canvas commits the guess.
     handleCommit();
   }
 });
@@ -410,7 +427,7 @@ canvas.addEventListener('click', (e) => {
 canvas.addEventListener('mousemove', (e) => {
   if (state !== 'IDLE') return;
   const { x, y } = canvasCoords(e);
-  canvas.style.cursor = hitButton(idleButtonLayout(canvas.width, canvas.height), x, y) ? 'pointer' : 'default';
+  canvas.style.cursor = hitButton(idleButtonLayout(canvas.width, canvas.height, isMobile), x, y) ? 'pointer' : 'default';
 });
 
 // ─── Mode switching (M / C keys, IDLE only) ──────────────────────────────────
@@ -461,7 +478,7 @@ async function switchToHand() {
 // ─── Render loop ──────────────────────────────────────────────────────────────
 
 function loop() {
-  draw(ctx, { state, round, mode, cameraErrorMsg, handInput, leaderboard, showLeaderboard });
+  draw(ctx, { state, round, mode, cameraErrorMsg, handInput, leaderboard, showLeaderboard, isMobile });
   requestAnimationFrame(loop);
 }
 
