@@ -305,7 +305,6 @@ canvas {
   background: rgba(0, 0, 0, 0.82);
   z-index: 200;
   padding: 16px;
-  overflow-y: auto;
 }
 
 #intro-overlay.hidden { display: none; }
@@ -316,12 +315,14 @@ canvas {
   border-radius: 10px;
   padding: 28px 28px;
   max-width: 680px;
+  max-height: 70vh;
   width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 16px;
   margin: auto;
+  overflow-y: auto;
 }
 
 #intro-title {
@@ -397,7 +398,7 @@ kbd {
 
 /* ── Mobile: stack modes vertically ──────────────────────────────────────── */
 @media (max-width: 520px) {
-  #intro-overlay { padding: 12px; align-items: flex-start; }
+  #intro-overlay { padding: 12px; }
 
   #intro-box { padding: 20px 16px; gap: 14px; border-radius: 8px; }
 
