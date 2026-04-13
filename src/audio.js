@@ -18,7 +18,7 @@ export function createPlayer() {
   const queue   = shuffle([...TRACKS]);
   let   index   = 0;
   const audio   = new Audio();
-  audio.volume  = 0.5;
+  audio.volume  = 0.20;
 
   function load(i) {
     index       = ((i % queue.length) + queue.length) % queue.length;
@@ -30,7 +30,7 @@ export function createPlayer() {
   load(0);
 
   return {
-    play()           { audio.play().catch(() => {}); },
+    play()           { return audio.play(); },
     pause()          { audio.pause(); },
     toggle()         { audio.paused ? audio.play().catch(() => {}) : audio.pause(); },
     next()           { load(index + 1); audio.play().catch(() => {}); },
