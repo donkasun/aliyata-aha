@@ -39,6 +39,48 @@ function drawEyeMarker(ctx, eyeWorld) {
 }
 
 
+// ─── Webcam overlay (hand mode, HIDDEN only) ─────────────────────────────────
+
+function drawWebcamOverlay(ctx, handInput, canvasW, canvasH) {
+  const video = handInput.getVideoElement();
+  if (!video || video.readyState < 2) return;
+
+  const OW = 240, OH = 180;
+  const OX = canvasW - OW - 10;
+  const OY = canvasH - OH - 10;
+
+  // Draw mirrored webcam feed (flip horizontally so it acts like a mirror).
+  ctx.save();
+  ctx.translate(OX + OW, OY);
+  ctx.scale(-1, 1);
+  ctx.drawImage(video, 0, 0, OW, OH);
+  ctx.restore();
+
+  // Thin border around the overlay.
+  ctx.strokeStyle = '#374151';
+  ctx.lineWidth   = 1;
+  ctx.strokeRect(OX, OY, OW, OH);
+
+  // Fingertip dot mapped from world space into overlay coordinates.
+  const cur  = handInput.getCursor();
+  const dotX = OX + OW - (cur.x / canvasW * OW);
+  const dotY = OY       + (cur.y / canvasH * OH);
+
+  ctx.beginPath();
+  ctx.arc(dotX, dotY, 5, 0, Math.PI * 2);
+  ctx.fillStyle = '#f9fafb';
+  ctx.fill();
+
+  // "show hand" hint when no landmarks are detected.
+  if (!handInput.isHandVisible()) {
+    ctx.fillStyle    = 'rgba(249,250,251,0.6)';
+    ctx.font         = '13px monospace';
+    ctx.textAlign    = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('show hand', OX + OW / 2, OY + OH / 2);
+  }
+}
+
 // ─── Main draw function ───────────────────────────────────────────────────────
 
 export function draw(ctx, { state, round, debugMode, mode, cameraErrorMsg, handInput }) {
@@ -94,6 +136,11 @@ export function draw(ctx, { state, round, debugMode, mode, cameraErrorMsg, handI
     ctx.textBaseline = 'top';
     const hint = mode === 'hand' ? 'Where is the eye? Pinch to confirm.' : 'Where is the eye? Press SPACE to confirm.';
     ctx.fillText(hint, width / 2, 20);
+
+    // Webcam overlay — hand mode only, drawn last so it sits above everything.
+    if (mode === 'hand' && handInput) {
+      drawWebcamOverlay(ctx, handInput, width, height);
+    }
 
     return;
   }
