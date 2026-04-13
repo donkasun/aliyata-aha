@@ -12,6 +12,7 @@ const ctx    = canvas.getContext('2d');
 let mode           = 'mouse';  // 'mouse' | 'hand'
 let handInput      = null;     // populated lazily in Task 2
 let cameraErrorMsg = '';
+let hiddenAt       = 0;  // timestamp when HIDDEN state was entered
 
 const mouseInput = createMouseInput(canvas);
 let   input      = mouseInput;
@@ -30,8 +31,8 @@ function handleCommit() {
   }
 }
 
-// Only fire handleCommit when the active mode matches the input source.
-mouseInput.onCommit(() => { if (mode === 'mouse') handleCommit(); });
+// Spacebar always advances state regardless of mode.
+mouseInput.onCommit(() => handleCommit());
 
 function startNewRound() {
   const seed         = generateSeed();
@@ -46,6 +47,7 @@ function transition(newState) {
   state = newState;
 
   if (newState === 'HIDDEN') {
+    hiddenAt = Date.now();
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40">
       <circle cx="20" cy="20" r="10" fill="none" stroke="#f9fafb" stroke-width="2"/>
       <line x1="2" y1="20" x2="38" y2="20" stroke="#f9fafb" stroke-width="2"/>
@@ -82,12 +84,13 @@ function transition(newState) {
 // ─── Mode switching (M / C keys, IDLE only) ──────────────────────────────────
 
 window.addEventListener('keydown', (e) => {
-  if (state !== 'IDLE') return;
-  if (e.code === 'KeyM' && mode !== 'mouse') {
+  if (state !== 'IDLE' && state !== 'RESULT') return;
+  if (e.code === 'KeyM') {
     mode  = 'mouse';
     input = mouseInput;
+    transition('REVEAL');
   }
-  if (e.code === 'KeyC' && mode !== 'hand') {
+  if (e.code === 'KeyC') {
     switchToHand();
   }
 });
@@ -95,12 +98,16 @@ window.addEventListener('keydown', (e) => {
 async function switchToHand() {
   if (!handInput) {
     handInput = createHandInput(canvas);
-    handInput.onCommit(() => { if (mode === 'hand') handleCommit(); });
+    // Pinch only commits the guess — HIDDEN state only.
+    handInput.onCommit(() => {
+      if (mode === 'hand' && state === 'HIDDEN' && Date.now() - hiddenAt >= 1500) handleCommit();
+    });
   }
   try {
     await handInput.start();
     mode  = 'hand';
     input = handInput;
+    transition('REVEAL');
   } catch {
     cameraErrorMsg = 'Camera unavailable';
     setTimeout(() => { cameraErrorMsg = ''; }, 3000);

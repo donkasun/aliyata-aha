@@ -18,6 +18,10 @@ function drawElephant(ctx, transform) {
   ctx.globalCompositeOperation = 'screen';
   ctx.drawImage(elephantImg, transform.offsetX, transform.offsetY, w, h);
   ctx.restore();
+  // Border around the image area, visible in all modes.
+  ctx.strokeStyle = '#374151';
+  ctx.lineWidth   = 1;
+  ctx.strokeRect(transform.offsetX, transform.offsetY, w, h);
 }
 
 // ─── Eye marker (shown during REVEAL so player knows what to memorise) ────────
@@ -62,9 +66,10 @@ function drawWebcamOverlay(ctx, handInput, canvasW, canvasH) {
   ctx.strokeRect(OX, OY, OW, OH);
 
   // Fingertip dot mapped from world space into overlay coordinates.
+  // The video is already mirrored, so X maps straight (no flip needed here).
   const cur  = handInput.getCursor();
-  const dotX = OX + OW - (cur.x / canvasW * OW);
-  const dotY = OY       + (cur.y / canvasH * OH);
+  const dotX = OX + (cur.x / canvasW * OW);
+  const dotY = OY + (cur.y / canvasH * OH);
 
   ctx.beginPath();
   ctx.arc(dotX, dotY, 5, 0, Math.PI * 2);
@@ -96,13 +101,12 @@ export function draw(ctx, { state, round, debugMode, mode, cameraErrorMsg, handI
 
     ctx.fillStyle = TEXT_COLOR;
     ctx.font      = '28px monospace';
-    ctx.fillText('Press SPACE to play', width / 2, height / 2 - 30);
+    ctx.fillText('Aliyata Asa Thabeema', width / 2, height / 2 - 30);
 
-    // Mode selector
+    // Mode selector — pressing M or C selects mode and starts immediately
     ctx.font      = '18px monospace';
-    ctx.fillStyle = mode === 'mouse' ? TEXT_COLOR : '#6b7280';
+    ctx.fillStyle = TEXT_COLOR;
     ctx.fillText('[M] Mouse',  width / 2 - 80, height / 2 + 20);
-    ctx.fillStyle = mode === 'hand' ? TEXT_COLOR : '#6b7280';
     ctx.fillText('[C] Camera', width / 2 + 80, height / 2 + 20);
 
     if (cameraErrorMsg) {
@@ -136,6 +140,20 @@ export function draw(ctx, { state, round, debugMode, mode, cameraErrorMsg, handI
     ctx.textBaseline = 'top';
     const hint = mode === 'hand' ? 'Where is the eye? Pinch to confirm.' : 'Where is the eye? Press SPACE to confirm.';
     ctx.fillText(hint, width / 2, 20);
+
+    // Hand cursor on main canvas — draws crosshair at fingertip world position.
+    if (mode === 'hand' && handInput) {
+      const { x, y } = handInput.getCursor();
+      ctx.strokeStyle = '#f9fafb';
+      ctx.lineWidth   = 2;
+      ctx.beginPath();
+      ctx.arc(x, y, 10, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(x - 18, y); ctx.lineTo(x + 18, y);
+      ctx.moveTo(x, y - 18); ctx.lineTo(x, y + 18);
+      ctx.stroke();
+    }
 
     // Webcam overlay — hand mode only, drawn last so it sits above everything.
     if (mode === 'hand' && handInput) {
@@ -185,6 +203,6 @@ export function draw(ctx, { state, round, debugMode, mode, cameraErrorMsg, handI
 
     // Instruction.
     ctx.font = '16px monospace';
-    ctx.fillText('SPACE to play again', 20, 96);
+    ctx.fillText('SPACE  [M] Mouse  [C] Camera', 20, 96);
   }
 }
