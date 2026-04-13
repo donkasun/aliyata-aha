@@ -300,11 +300,13 @@ canvas {
   position: fixed;
   inset: 0;
   display: flex;
-  align-items: center;
+  align-items: flex-start;     /* flex-start so the box can scroll out of view */
   justify-content: center;
   background: rgba(0, 0, 0, 0.82);
   z-index: 200;
-  padding: 16px;
+  padding: 15vh 16px;          /* top/bottom padding centres it on normal viewports */
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 #intro-overlay.hidden { display: none; }
@@ -313,16 +315,14 @@ canvas {
   background: #111827;
   border: 2px solid #f59e0b;
   border-radius: 10px;
-  padding: 28px 28px;
+  padding: 28px;
   max-width: 680px;
-  max-height: 70vh;
   width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 16px;
-  margin: auto;
-  overflow-y: auto;
+  margin: auto;                /* keeps it vertically centred when content fits */
 }
 
 #intro-title {
@@ -398,7 +398,7 @@ kbd {
 
 /* ── Mobile: stack modes vertically ──────────────────────────────────────── */
 @media (max-width: 520px) {
-  #intro-overlay { padding: 12px; }
+  #intro-overlay { padding: 12px 12px; }
 
   #intro-box { padding: 20px 16px; gap: 14px; border-radius: 8px; }
 
