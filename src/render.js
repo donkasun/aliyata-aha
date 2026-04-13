@@ -1,5 +1,6 @@
 // src/render.js
 import { IMAGE_SRC, VIEWBOX } from './elephant.js';
+import { getMessage } from './messages.js';
 
 const BG_COLOR   = '#111827';
 const TEXT_COLOR = '#f9fafb';
@@ -193,7 +194,7 @@ export function draw(ctx, { state, round, debugMode, mode, cameraErrorMsg, handI
     ctx.font         = 'bold 36px monospace';
     ctx.textAlign    = 'left';
     ctx.textBaseline = 'top';
-    ctx.fillStyle    = round.hit ? '#22c55e' : '#ef4444';
+    ctx.fillStyle    = round.hit ? '#f59e0b' : '#ef4444';
     ctx.fillText(round.hit ? 'HIT!' : 'MISS', 20, 20);
 
     // Distance (below label).
@@ -201,8 +202,13 @@ export function draw(ctx, { state, round, debugMode, mode, cameraErrorMsg, handI
     ctx.font      = '18px monospace';
     ctx.fillText(`${round.distance}px off`, 20, 66);
 
+    // Sinhala message
+    ctx.font      = '20px sans-serif';
+    ctx.fillStyle = TEXT_COLOR;
+    ctx.fillText(getMessage(round.distance, round.hit), 20, 100);
+
     // Instruction.
     ctx.font = '16px monospace';
-    ctx.fillText('SPACE  [M] Mouse  [C] Camera', 20, 96);
+    ctx.fillText('SPACE  [M] Mouse  [C] Camera', 20, 130);
   }
 }
