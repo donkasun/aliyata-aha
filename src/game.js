@@ -37,8 +37,11 @@ function tryPlayMusic() {
   });
 }
 
+let userPaused = false;
+
 btnPlay.addEventListener('click', () => {
   player.toggle();
+  userPaused = player.isPaused();
   syncPlayButton();
 });
 document.getElementById('btn-prev').addEventListener('click', () => { player.prev(); updateTrackName(); });
@@ -89,7 +92,7 @@ function showIntro() {
 
 function dismissIntro() {
   introOverlay.classList.add('hidden');
-  tryPlayMusic();
+  if (!userPaused) tryPlayMusic();
 }
 
 // Always show on page load.
