@@ -1,23 +1,39 @@
 *, *::before, *::after { box-sizing: border-box; }
 
+html { height: 100%; }
+
 body {
   margin: 0;
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100vh;           /* fallback */
+  height: 100dvh;          /* dynamic viewport — accounts for iOS browser chrome */
+  overflow: hidden;        /* body never scrolls; .page-content scrolls instead */
   background: #0f172a;
   align-items: center;
 }
 
-/* ── Page content (above tab bar) ────────────────────────────────────────── */
+/* ── Page content (scrollable area above bottom chrome) ──────────────────── */
 .page-content {
   flex: 1;
+  min-height: 0;           /* required for flex children to be scrollable */
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   width: 100%;
   padding: 20px 0 8px;
+}
+
+/* ── Bottom chrome wrapper (music bar + tab bar) ─────────────────────────── */
+#bottom-chrome {
+  flex-shrink: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: env(safe-area-inset-bottom, 0px); /* iOS home indicator */
 }
 
 /* ── Game view ────────────────────────────────────────────────────────────── */
@@ -245,27 +261,21 @@ canvas {
   box-shadow: 0 3px 12px rgba(245, 158, 11, 0.65);
 }
 
-/* ── Floating music player (bottom-right) ─────────────────────────────────── */
+/* ── Music bar (inline, full-width, above tab bar) ───────────────────────── */
 #music-float {
-  position: fixed;
-  bottom: 72px;
-  right: 20px;
-  background: #111827;
-  border: 1px solid #2d3748;
-  border-radius: 12px;
-  padding: 10px 14px;
+  width: 100%;
+  background: #0c111d;
+  border-top: 1px solid #1f2937;
+  padding: 6px 16px;
   display: flex;
-  flex-direction: column;
-  gap: 5px;
-  min-width: 190px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-  z-index: 50;
+  align-items: center;
 }
 
 #music-controls-row {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  width: 100%;
 }
 
 #music-float button {
@@ -276,6 +286,7 @@ canvas {
   border-radius: 6px;
   cursor: pointer;
   font-size: 13px;
+  flex-shrink: 0;
   transition: color 0.15s, border-color 0.15s;
 }
 
@@ -286,12 +297,13 @@ canvas {
 #vol-ios-note { color: #4b5563; font: 10px monospace; flex-shrink: 0; }
 
 #track-name {
+  flex: 1;
   color: #4b5563;
   font: 10px monospace;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 170px;
+  min-width: 0;
 }
 
 /* ── Utility ──────────────────────────────────────────────────────────────── */

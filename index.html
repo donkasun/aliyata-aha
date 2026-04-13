@@ -44,31 +44,36 @@
 
   </div>
 
-  <!-- ── Bottom tab bar (full width) ───────────────────────────────────── -->
-  <nav id="tab-bar">
-    <button class="tab active" data-tab="game" type="button">
-      <span class="tab-icon">🎮</span>
-      <span class="tab-label">GAME</span>
-    </button>
-    <button class="tab" data-tab="leaderboard" type="button">
-      <span class="tab-icon">🏆</span>
-      <span class="tab-label">LEADERBOARD</span>
-    </button>
-  </nav>
-
   <!-- ── How to Play button (fixed top-right) ──────────────────────────── -->
   <button id="btn-help" type="button" title="How to Play">❓ How to Play</button>
 
-  <!-- ── Floating music player (bottom-right) ───────────────────────────── -->
-  <div id="music-float">
-    <div id="music-controls-row">
-      <button id="btn-prev" type="button">⏮</button>
-      <button id="btn-play" type="button">▶</button>
-      <button id="btn-next" type="button">⏭</button>
-      <input id="vol-slider" type="range" min="0" max="100" value="20" />
-      <span id="vol-ios-note" style="display:none">🔊 hardware</span>
+  <!-- ── Bottom chrome: music bar + tab bar ────────────────────────────── -->
+  <div id="bottom-chrome">
+
+    <!-- Music bar (inline, full-width) -->
+    <div id="music-float">
+      <div id="music-controls-row">
+        <button id="btn-prev" type="button">⏮</button>
+        <button id="btn-play" type="button">▶</button>
+        <button id="btn-next" type="button">⏭</button>
+        <input id="vol-slider" type="range" min="0" max="100" value="20" />
+        <span id="vol-ios-note" style="display:none">🔊 hardware</span>
+        <span id="track-name"></span>
+      </div>
     </div>
-    <span id="track-name"></span>
+
+    <!-- Tab bar -->
+    <nav id="tab-bar">
+      <button class="tab active" data-tab="game" type="button">
+        <span class="tab-icon">🎮</span>
+        <span class="tab-label">GAME</span>
+      </button>
+      <button class="tab" data-tab="leaderboard" type="button">
+        <span class="tab-icon">🏆</span>
+        <span class="tab-label">LEADERBOARD</span>
+      </button>
+    </nav>
+
   </div>
 
   <video id="hand-feed" style="display:none" playsinline></video>
