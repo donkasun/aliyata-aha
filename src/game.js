@@ -311,6 +311,8 @@ let   input      = mouseInput;
 let state       = 'IDLE';
 let round       = null;
 let revealTimer = null;
+// Tap marker: tracks last touch position in HIDDEN state for visual feedback.
+const tapMarker = { x: 0, y: 0, visible: false };
 
 function handleCommit() {
   switch (state) {
@@ -332,6 +334,9 @@ function startNewRound() {
 
 function transition(newState) {
   if (revealTimer !== null) { clearTimeout(revealTimer); revealTimer = null; }
+
+  // Hide tap marker whenever we leave HIDDEN state.
+  if (newState !== 'HIDDEN') tapMarker.visible = false;
 
   state = newState;
 
@@ -403,7 +408,7 @@ function transition(newState) {
   syncHtmlOverlays();
 }
 
-// ─── Canvas click / hover helpers ────────────────────────────────────────────
+// ─── Canvas interaction ───────────────────────────────────────────────────────
 
 canvas.addEventListener('click', () => {
   // IDLE buttons are now HTML — no canvas click handling needed in IDLE.
@@ -412,6 +417,29 @@ canvas.addEventListener('click', () => {
     handleCommit();
   }
 });
+
+// Show tap marker when user touches the canvas in HIDDEN/tap mode.
+function canvasTouchCoords(touch) {
+  const rect   = canvas.getBoundingClientRect();
+  return {
+    x: (touch.clientX - rect.left) * (canvas.width  / rect.width),
+    y: (touch.clientY - rect.top)  * (canvas.height / rect.height),
+  };
+}
+
+canvas.addEventListener('touchstart', (e) => {
+  if (state === 'HIDDEN' && isMobile && mode === 'mouse') {
+    const { x, y } = canvasTouchCoords(e.changedTouches[0]);
+    tapMarker.x = x; tapMarker.y = y; tapMarker.visible = true;
+  }
+}, { passive: true });
+
+canvas.addEventListener('touchmove', (e) => {
+  if (state === 'HIDDEN' && isMobile && mode === 'mouse') {
+    const { x, y } = canvasTouchCoords(e.changedTouches[0]);
+    tapMarker.x = x; tapMarker.y = y;
+  }
+}, { passive: true });
 
 
 // ─── Mode switching (M / C keys, IDLE only) ──────────────────────────────────
@@ -462,7 +490,7 @@ async function switchToHand() {
 // ─── Render loop ──────────────────────────────────────────────────────────────
 
 function loop() {
-  draw(ctx, { state, round, mode, cameraErrorMsg, handInput, leaderboard, showLeaderboard, isMobile });
+  draw(ctx, { state, round, mode, cameraErrorMsg, handInput, leaderboard, showLeaderboard, isMobile, tapMarker });
   requestAnimationFrame(loop);
 }
 

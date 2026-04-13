@@ -152,7 +152,7 @@ function drawLeaderboard(ctx, leaderboard, canvasW, canvasH) {
 
 // ─── Main draw function ───────────────────────────────────────────────────────
 
-export function draw(ctx, { state, round, mode, cameraErrorMsg, handInput, leaderboard = [], showLeaderboard = false, isMobile = false }) {
+export function draw(ctx, { state, round, mode, cameraErrorMsg, handInput, leaderboard = [], showLeaderboard = false, isMobile = false, tapMarker = null }) {
   const { width, height } = ctx.canvas;
 
   // Clear
@@ -194,6 +194,37 @@ export function draw(ctx, { state, round, mode, cameraErrorMsg, handInput, leade
       ctx.beginPath();
       ctx.moveTo(x - 18, y); ctx.lineTo(x + 18, y);
       ctx.moveTo(x, y - 18); ctx.lineTo(x, y + 18);
+      ctx.stroke();
+    }
+
+    // Tap marker — mobile tap mode: show where the user last touched.
+    if (tapMarker?.visible) {
+      const { x, y } = tapMarker;
+      // Outer pulsing ring
+      ctx.beginPath();
+      ctx.arc(x, y, 22, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(245, 158, 11, 0.4)';
+      ctx.lineWidth   = 2;
+      ctx.stroke();
+      // Inner solid ring
+      ctx.beginPath();
+      ctx.arc(x, y, 12, 0, Math.PI * 2);
+      ctx.strokeStyle = '#f59e0b';
+      ctx.lineWidth   = 2.5;
+      ctx.stroke();
+      // Centre dot
+      ctx.beginPath();
+      ctx.arc(x, y, 4, 0, Math.PI * 2);
+      ctx.fillStyle = '#f59e0b';
+      ctx.fill();
+      // Crosshair lines
+      ctx.strokeStyle = '#f59e0b';
+      ctx.lineWidth   = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(x - 20, y); ctx.lineTo(x - 14, y);
+      ctx.moveTo(x + 14, y); ctx.lineTo(x + 20, y);
+      ctx.moveTo(x, y - 20); ctx.lineTo(x, y - 14);
+      ctx.moveTo(x, y + 14); ctx.lineTo(x, y + 20);
       ctx.stroke();
     }
 

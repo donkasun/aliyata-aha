@@ -50,15 +50,16 @@ body {
 #game-status {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
   padding: 8px 14px;
   background: #0c111d;
   border: 1px solid #1f2937;
   border-bottom: none;
   border-radius: 6px 6px 0 0;
+  flex-wrap: wrap;
 }
 
-#game-status.mode-hint { justify-content: center; }
+#game-status.mode-hint { justify-content: center; flex-wrap: nowrap; }
 
 #status-label {
   font: bold 22px monospace;
@@ -67,7 +68,7 @@ body {
 
 #status-label.status-hit  { color: #f59e0b; }
 #status-label.status-miss { color: #ef4444; }
-#status-label.status-hint { color: #9ca3af; font: 15px monospace; font-weight: normal; }
+#status-label.status-hint { color: #9ca3af; font: 14px monospace; font-weight: normal; }
 
 #status-sub {
   color: #6b7280;
@@ -77,12 +78,32 @@ body {
 
 #status-msg {
   flex: 1;
+  min-width: 0;
   color: #f9fafb;
-  font: 16px sans-serif;
+  font: 15px sans-serif;
   text-align: right;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+@media (max-width: 520px) {
+  #game-status { gap: 6px; padding: 6px 10px; }
+
+  #status-label { font-size: 18px; }
+
+  #status-label.status-hint { font-size: 12px; }
+
+  #status-sub { font-size: 12px; }
+
+  /* On small screens let the Sinhala message wrap below label+sub */
+  #status-msg {
+    width: 100%;
+    text-align: left;
+    white-space: normal;
+    font-size: 13px;
+    line-height: 1.4;
+  }
 }
 
 /* ── Canvas frame with gold corner brackets ───────────────────────────────── */
