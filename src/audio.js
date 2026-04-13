@@ -3,6 +3,8 @@
 
 const TRACKS = [
   'music/Sirilaka Piri Aurudu Siri - Aurudu Song Rupavahini Official Video 2012.mp3',
+  'music/Me Awurudu Kale  ම අවරද කල - Lionel Ranwala , Ranwala Balakaya.mp3',
+  'music/ITN සරය මගලයය තම ගතය  Soorya Mangalya Theme Song 2014.mp3',
 ];
 
 // Shuffle array in place (Fisher-Yates).
