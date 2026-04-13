@@ -1,7 +1,7 @@
 // src/game.js
 import { createMouseInput } from './input-mouse.js';
 import { createHandInput }  from './input-hand.js';
-import { draw, idleButtonLayout } from './render.js';
+import { draw } from './render.js';
 import { generateSeed, generateTransform, getEyeWorld } from './board.js';
 import { createPlayer }        from './audio.js';
 import { getMessage }          from './messages.js';
@@ -9,8 +9,10 @@ import { getName, setName }    from './name-store.js';
 import { submitScore, subscribeLeaderboard, isNameTaken } from './score.js';
 import { track }               from './firebase.js';
 
-const canvas = document.getElementById('game-canvas');
-const ctx    = canvas.getContext('2d');
+const canvas   = document.getElementById('game-canvas');
+const ctx      = canvas.getContext('2d');
+const isMobile = window.matchMedia('(pointer: coarse)').matches;
+if (isMobile) document.body.classList.add('is-mobile');
 
 // ─── Music ───────────────────────────────────────────────────────────────────
 const player = createPlayer();
@@ -35,15 +37,32 @@ function tryPlayMusic() {
   });
 }
 
+let userPaused = false;
+
 btnPlay.addEventListener('click', () => {
   player.toggle();
+  userPaused = player.isPaused();
   syncPlayButton();
 });
 document.getElementById('btn-prev').addEventListener('click', () => { player.prev(); updateTrackName(); });
 document.getElementById('btn-next').addEventListener('click', () => { player.next(); updateTrackName(); });
-document.getElementById('vol-slider').addEventListener('input', (e) => {
-  player.setVolume(e.target.value / 100);
-});
+const volSlider  = document.getElementById('vol-slider');
+const volIosNote = document.getElementById('vol-ios-note');
+
+// iOS Safari ignores audio.volume — hardware buttons control volume there.
+const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) ||
+              (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+if (isIOS) {
+  volSlider.style.display  = 'none';
+  volIosNote.style.display = 'inline';
+} else {
+  volSlider.value = Math.round(player.getVolume() * 100);
+  // 'input' fires during drag; 'change' fires on release (fallback for some mobile browsers).
+  const onVol = (e) => player.setVolume(e.target.value / 100);
+  volSlider.addEventListener('input',  onVol);
+  volSlider.addEventListener('change', onVol);
+}
 
 updateTrackName();
 syncPlayButton();
@@ -73,7 +92,7 @@ function showIntro() {
 
 function dismissIntro() {
   introOverlay.classList.add('hidden');
-  tryPlayMusic();
+  if (!userPaused) tryPlayMusic();
 }
 
 // Always show on page load.
@@ -177,25 +196,80 @@ subscribeLeaderboard((rows) => {
 
 // ─── HTML state overlays (status bar + result actions) ────────────────────────
 
-const gameStatus    = document.getElementById('game-status');
-const statusLabel   = document.getElementById('status-label');
-const statusSub     = document.getElementById('status-sub');
-const statusMsg     = document.getElementById('status-msg');
-const resultActions = document.getElementById('result-actions');
+const gameStatus      = document.getElementById('game-status');
+const statusLabel     = document.getElementById('status-label');
+const statusSub       = document.getElementById('status-sub');
+const statusMsg       = document.getElementById('status-msg');
+const idleActions     = document.getElementById('idle-actions');
+const resultActions   = document.getElementById('result-actions');
+const tapConfirmWrap  = document.getElementById('tap-confirm-wrap');
+const cameraErrEl     = document.getElementById('camera-error-msg');
+
+let cameraErrTimer = null;
+function showCameraError(msg) {
+  cameraErrEl.textContent = msg;
+  cameraErrEl.classList.remove('hidden');
+  clearTimeout(cameraErrTimer);
+  cameraErrTimer = setTimeout(() => cameraErrEl.classList.add('hidden'), 4000);
+}
+
+// Apply mobile-specific labels to result buttons once at startup.
+if (isMobile) {
+  resultActions.querySelector('[data-action="mouse"]').textContent  = '👆 Tap';
+  resultActions.querySelector('[data-action="board"]').textContent  = '🏆 Board';
+  resultActions.querySelector('[data-action="name"]').textContent   = '✏️ Name';
+} else {
+  resultActions.querySelector('[data-action="mouse"]').textContent  = '[M] Mouse';
+  resultActions.querySelector('[data-action="camera"]').textContent = '[C] Camera';
+  resultActions.querySelector('[data-action="board"]').textContent  = '[L] Board';
+  resultActions.querySelector('[data-action="name"]').textContent   = '[N] Name';
+}
+
+document.getElementById('tap-confirm').addEventListener('click', () => {
+  if (state === 'HIDDEN') handleCommit();
+});
+
+// Wire idle mode buttons (HTML, shown below canvas in IDLE state).
+idleActions.addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-idle]');
+  if (!btn) return;
+  if (btn.dataset.idle === 'mouse') {
+    if (mode === 'hand' && handInput) handInput.stop();
+    mode = 'mouse'; input = mouseInput; transition('REVEAL');
+  } else if (btn.dataset.idle === 'camera') {
+    switchToHand();
+  }
+});
 
 function syncHtmlOverlays() {
+  const isIdle   = state === 'IDLE';
   const isHidden = state === 'HIDDEN';
   const isResult = state === 'RESULT';
 
+  idleActions.classList.toggle('hidden', !isIdle);
   gameStatus.classList.toggle('hidden', !isHidden && !isResult);
   resultActions.classList.toggle('hidden', !isResult);
+
+  // Active styling on idle buttons
+  idleActions.querySelector('[data-idle="mouse"]').classList.toggle('active', mode === 'mouse');
+  idleActions.querySelector('[data-idle="camera"]').classList.toggle('active', mode === 'hand');
+
+  // Label [T] Tap vs 🖱️ Mouse based on device
+  idleActions.querySelector('[data-idle="mouse"]').textContent = isMobile ? '👆 Tap' : '🖱️ Mouse';
+
+  // Show tap confirm only on mobile in HIDDEN state (tap mode, not hand/camera)
+  tapConfirmWrap.classList.toggle('hidden', !(isHidden && isMobile && mode === 'mouse'));
 
   if (isHidden) {
     gameStatus.classList.add('mode-hint');
     statusLabel.className   = 'status-hint';
-    statusLabel.textContent = mode === 'hand'
-      ? 'Where is the eye? Pinch to confirm.'
-      : 'Where is the eye? Click or SPACE to confirm.';
+    if (mode === 'hand') {
+      statusLabel.textContent = 'Where is the eye? Pinch to confirm.';
+    } else if (isMobile) {
+      statusLabel.textContent = 'Tap where the eye was, then press Drop Eye.';
+    } else {
+      statusLabel.textContent = 'Where is the eye? Click or SPACE to confirm.';
+    }
     statusSub.textContent = '';
     statusMsg.textContent = '';
   } else if (isResult && round) {
@@ -220,7 +294,15 @@ resultActions.addEventListener('click', (e) => {
   } else if (action === 'camera') {
     switchToHand();
   } else if (action === 'board') {
-    showLeaderboard = !showLeaderboard;
+    if (isMobile) {
+      // On mobile use the full-screen HTML leaderboard tab.
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelector('.tab[data-tab="leaderboard"]').classList.add('active');
+      gameView.classList.add('hidden');
+      lbView.classList.remove('hidden');
+    } else {
+      showLeaderboard = !showLeaderboard;
+    }
   } else if (action === 'name') {
     showNamePrompt((name) => {
       submitScore({ displayName: name, distance: round.distance, timeTaken: round.timeTaken, seed: round.seed }).catch(console.error);
@@ -250,11 +332,23 @@ document.querySelectorAll('.tab').forEach(tab => {
 // ─── Mode ────────────────────────────────────────────────────────────────────
 
 let mode           = 'mouse';  // 'mouse' | 'hand'
-let handInput      = null;     // populated lazily in Task 2
+let handInput      = null;
 let cameraErrorMsg = '';
 let hiddenAt       = 0;  // timestamp when HIDDEN state was entered
 
 const mouseInput = createMouseInput(canvas);
+
+// Pre-load the MediaPipe model in the background so Camera mode starts quickly.
+// Only bother if the browser supports getUserMedia (i.e. secure context).
+if (navigator.mediaDevices?.getUserMedia) {
+  setTimeout(() => {
+    handInput = createHandInput(canvas);
+    handInput.onCommit(() => {
+      if (mode === 'hand' && state === 'HIDDEN' && Date.now() - hiddenAt >= 1500) handleCommit();
+    });
+    handInput.warmUp();
+  }, 3000);  // defer 3 s so it doesn't compete with page load
+}
 let   input      = mouseInput;
 
 // ─── State ───────────────────────────────────────────────────────────────────
@@ -262,6 +356,8 @@ let   input      = mouseInput;
 let state       = 'IDLE';
 let round       = null;
 let revealTimer = null;
+// Tap marker: tracks last touch position in HIDDEN state for visual feedback.
+const tapMarker = { x: 0, y: 0, visible: false };
 
 function handleCommit() {
   switch (state) {
@@ -283,6 +379,9 @@ function startNewRound() {
 
 function transition(newState) {
   if (revealTimer !== null) { clearTimeout(revealTimer); revealTimer = null; }
+
+  // Hide tap marker whenever we leave HIDDEN state.
+  if (newState !== 'HIDDEN') tapMarker.visible = false;
 
   state = newState;
 
@@ -354,50 +453,39 @@ function transition(newState) {
   syncHtmlOverlays();
 }
 
-// ─── Canvas click / hover helpers ────────────────────────────────────────────
+// ─── Canvas interaction ───────────────────────────────────────────────────────
 
-/** Convert a MouseEvent into canvas-pixel coordinates (accounts for CSS scaling). */
-function canvasCoords(e) {
-  const rect = canvas.getBoundingClientRect();
-  return {
-    x: (e.clientX - rect.left)  * (canvas.width  / rect.width),
-    y: (e.clientY - rect.top)   * (canvas.height / rect.height),
-  };
-}
-
-/** Return the id of the button hit by (px, py), or null. */
-function hitButton(buttons, px, py) {
-  for (const btn of buttons) {
-    if (px >= btn.x && px <= btn.x + btn.w && py >= btn.y && py <= btn.y + btn.h) return btn.id;
-  }
-  return null;
-}
-
-canvas.addEventListener('click', (e) => {
-  const { x, y } = canvasCoords(e);
-
-  if (state === 'IDLE') {
-    const hit = hitButton(idleButtonLayout(canvas.width, canvas.height), x, y);
-    if (hit === 'mouse') {
-      if (mode === 'hand' && handInput) handInput.stop();
-      mode = 'mouse'; input = mouseInput; transition('REVEAL');
-    } else if (hit === 'camera') {
-      switchToHand();
-    }
-    return;
-  }
-
-  if (state === 'HIDDEN') {
-    // Clicking anywhere commits the guess (alternative to SPACE / pinch).
+canvas.addEventListener('click', () => {
+  // IDLE buttons are now HTML — no canvas click handling needed in IDLE.
+  // On mobile in tap mode, commit is via the explicit #tap-confirm button.
+  if (state === 'HIDDEN' && !(isMobile && mode === 'mouse')) {
     handleCommit();
   }
 });
 
-canvas.addEventListener('mousemove', (e) => {
-  if (state !== 'IDLE') return;
-  const { x, y } = canvasCoords(e);
-  canvas.style.cursor = hitButton(idleButtonLayout(canvas.width, canvas.height), x, y) ? 'pointer' : 'default';
-});
+// Show tap marker when user touches the canvas in HIDDEN/tap mode.
+function canvasTouchCoords(touch) {
+  const rect   = canvas.getBoundingClientRect();
+  return {
+    x: (touch.clientX - rect.left) * (canvas.width  / rect.width),
+    y: (touch.clientY - rect.top)  * (canvas.height / rect.height),
+  };
+}
+
+canvas.addEventListener('touchstart', (e) => {
+  if (state === 'HIDDEN' && isMobile && mode === 'mouse') {
+    const { x, y } = canvasTouchCoords(e.changedTouches[0]);
+    tapMarker.x = x; tapMarker.y = y; tapMarker.visible = true;
+  }
+}, { passive: true });
+
+canvas.addEventListener('touchmove', (e) => {
+  if (state === 'HIDDEN' && isMobile && mode === 'mouse') {
+    const { x, y } = canvasTouchCoords(e.changedTouches[0]);
+    tapMarker.x = x; tapMarker.y = y;
+  }
+}, { passive: true });
+
 
 // ─── Mode switching (M / C keys, IDLE only) ──────────────────────────────────
 
@@ -425,20 +513,42 @@ window.addEventListener('keydown', (e) => {
   }
 });
 
+const cameraBtn = idleActions.querySelector('[data-idle="camera"]');
+
+function setCameraLoading(loading) {
+  cameraBtn.classList.toggle('loading', loading);
+  cameraBtn.disabled = loading;
+  idleActions.querySelector('[data-idle="mouse"]').disabled = loading;
+  if (loading) {
+    cameraBtn.dataset.originalText = cameraBtn.textContent;
+    cameraBtn.textContent = 'Starting…';
+  } else {
+    cameraBtn.textContent = cameraBtn.dataset.originalText || '📷 Camera';
+  }
+}
+
 async function switchToHand() {
+  if (!navigator.mediaDevices?.getUserMedia) {
+    showCameraError('📷 Camera requires HTTPS — not available over HTTP');
+    cameraErrorMsg = 'Camera needs HTTPS';
+    setTimeout(() => { cameraErrorMsg = ''; }, 4000);
+    return;
+  }
   if (!handInput) {
     handInput = createHandInput(canvas);
-    // Pinch only commits the guess — HIDDEN state only.
     handInput.onCommit(() => {
       if (mode === 'hand' && state === 'HIDDEN' && Date.now() - hiddenAt >= 1500) handleCommit();
     });
   }
+  setCameraLoading(true);
   try {
     await handInput.start();
     mode  = 'hand';
     input = handInput;
     transition('REVEAL');
   } catch {
+    setCameraLoading(false);
+    showCameraError('📷 Camera unavailable');
     cameraErrorMsg = 'Camera unavailable';
     setTimeout(() => { cameraErrorMsg = ''; }, 3000);
   }
@@ -447,8 +557,11 @@ async function switchToHand() {
 // ─── Render loop ──────────────────────────────────────────────────────────────
 
 function loop() {
-  draw(ctx, { state, round, mode, cameraErrorMsg, handInput, leaderboard, showLeaderboard });
+  draw(ctx, { state, round, mode, cameraErrorMsg, handInput, leaderboard, showLeaderboard, isMobile, tapMarker });
   requestAnimationFrame(loop);
 }
 
 requestAnimationFrame(loop);
+
+// Initialise HTML overlay state for the starting IDLE state.
+syncHtmlOverlays();

@@ -22,7 +22,10 @@ const analytics  = getAnalytics(app);  // auto-tracks page_view, session, engage
 // Silently establishes a persistent anonymous uid on every page load.
 signInAnonymously(auth).catch(console.error);
 
-export const isDev = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+// Dev = localhost, loopback, or any non-standard port (covers IP:port on mobile).
+export const isDev = location.hostname === 'localhost'
+  || location.hostname === '127.0.0.1'
+  || (location.port !== '' && location.port !== '80' && location.port !== '443');
 
 // Convenience wrapper — silenced in local dev to keep Analytics clean.
 export const track = (event, params = {}) => {

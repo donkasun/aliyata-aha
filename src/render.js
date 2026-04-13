@@ -6,11 +6,11 @@ const TEXT_COLOR = '#f9fafb';
 
 // ─── Button layout helpers (exported for hit-testing in game.js) ──────────────
 
-export function idleButtonLayout(width, height) {
+export function idleButtonLayout(width, height, isMobile = false) {
   const cx = width / 2, cy = height / 2;
   const W = 130, H = 40;
   return [
-    { id: 'mouse',  label: '[M] Mouse',  x: cx - 80 - W / 2, y: cy + 20 - H / 2, w: W, h: H },
+    { id: 'mouse',  label: isMobile ? '[T] Tap' : '[M] Mouse',  x: cx - 80 - W / 2, y: cy + 20 - H / 2, w: W, h: H },
     { id: 'camera', label: '[C] Camera', x: cx + 80 - W / 2, y: cy + 20 - H / 2, w: W, h: H },
   ];
 }
@@ -152,7 +152,7 @@ function drawLeaderboard(ctx, leaderboard, canvasW, canvasH) {
 
 // ─── Main draw function ───────────────────────────────────────────────────────
 
-export function draw(ctx, { state, round, mode, cameraErrorMsg, handInput, leaderboard = [], showLeaderboard = false }) {
+export function draw(ctx, { state, round, mode, cameraErrorMsg, handInput, leaderboard = [], showLeaderboard = false, isMobile = false, tapMarker = null }) {
   const { width, height } = ctx.canvas;
 
   // Clear
@@ -163,31 +163,14 @@ export function draw(ctx, { state, round, mode, cameraErrorMsg, handInput, leade
     ctx.textAlign    = 'center';
     ctx.textBaseline = 'middle';
 
-    ctx.fillStyle = '#f59e0b';  // gold
+    ctx.fillStyle = '#f59e0b';
     ctx.font      = '32px sans-serif';
-    ctx.fillText('Aliyata Asa Thabeema', width / 2, height / 2 - 30);
-
-    // Mode selector buttons — clickable or keyboard [M] / [C]
-    for (const btn of idleButtonLayout(width, height)) {
-      const active = (btn.id === 'mouse' && mode === 'mouse') || (btn.id === 'camera' && mode === 'hand');
-      // Outline
-      ctx.beginPath();
-      ctx.roundRect(btn.x, btn.y, btn.w, btn.h, 5);
-      ctx.strokeStyle = active ? '#f59e0b' : '#374151';
-      ctx.lineWidth   = 1.5;
-      ctx.stroke();
-      // Label
-      ctx.font         = '18px monospace';
-      ctx.textAlign    = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillStyle    = active ? '#f59e0b' : '#78350f';
-      ctx.fillText(btn.label, btn.x + btn.w / 2, btn.y + btn.h / 2);
-    }
+    ctx.fillText('Aliyata Asa Thabeema', width / 2, height / 2);
 
     if (cameraErrorMsg) {
       ctx.fillStyle = '#ef4444';
       ctx.font      = '16px monospace';
-      ctx.fillText(cameraErrorMsg, width / 2, height / 2 + 60);
+      ctx.fillText(cameraErrorMsg, width / 2, height / 2 + 50);
     }
 
     return;
@@ -211,6 +194,37 @@ export function draw(ctx, { state, round, mode, cameraErrorMsg, handInput, leade
       ctx.beginPath();
       ctx.moveTo(x - 18, y); ctx.lineTo(x + 18, y);
       ctx.moveTo(x, y - 18); ctx.lineTo(x, y + 18);
+      ctx.stroke();
+    }
+
+    // Tap marker — mobile tap mode: show where the user last touched.
+    if (tapMarker?.visible) {
+      const { x, y } = tapMarker;
+      // Outer pulsing ring
+      ctx.beginPath();
+      ctx.arc(x, y, 22, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(245, 158, 11, 0.4)';
+      ctx.lineWidth   = 2;
+      ctx.stroke();
+      // Inner solid ring
+      ctx.beginPath();
+      ctx.arc(x, y, 12, 0, Math.PI * 2);
+      ctx.strokeStyle = '#f59e0b';
+      ctx.lineWidth   = 2.5;
+      ctx.stroke();
+      // Centre dot
+      ctx.beginPath();
+      ctx.arc(x, y, 4, 0, Math.PI * 2);
+      ctx.fillStyle = '#f59e0b';
+      ctx.fill();
+      // Crosshair lines
+      ctx.strokeStyle = '#f59e0b';
+      ctx.lineWidth   = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(x - 20, y); ctx.lineTo(x - 14, y);
+      ctx.moveTo(x + 14, y); ctx.lineTo(x + 20, y);
+      ctx.moveTo(x, y - 20); ctx.lineTo(x, y - 14);
+      ctx.moveTo(x, y + 14); ctx.lineTo(x, y + 20);
       ctx.stroke();
     }
 

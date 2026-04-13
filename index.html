@@ -14,22 +14,38 @@
 
       <!-- Status bar: above canvas — HIDDEN hint or RESULT HIT/MISS + message -->
       <div id="game-status" class="hidden">
-        <span id="status-label"></span>
-        <span id="status-sub"></span>
-        <span id="status-msg"></span>
+        <div id="status-row1">
+          <span id="status-label"></span>
+          <span id="status-sub"></span>
+        </div>
+        <div id="status-row2">
+          <span id="status-msg"></span>
+        </div>
       </div>
 
       <div class="game-frame">
         <canvas id="game-canvas" width="1024" height="640"></canvas>
       </div>
 
+      <!-- Mode buttons — shown in IDLE state -->
+      <div id="idle-actions">
+        <button type="button" data-idle="mouse" id="idle-btn-mouse">🖱️ Mouse</button>
+        <button type="button" data-idle="camera">📷 Camera</button>
+      </div>
+      <p id="camera-error-msg" class="hidden"></p>
+
+      <!-- Tap confirm button — shown in HIDDEN state on touch devices -->
+      <div id="tap-confirm-wrap" class="hidden">
+        <button id="tap-confirm" type="button">✊ Drop Eye</button>
+      </div>
+
       <!-- Action chips: below canvas — shown in RESULT state -->
       <div id="result-actions" class="hidden">
         <button type="button" data-action="again">▶ Again</button>
-        <button type="button" data-action="mouse">[M] Mouse</button>
-        <button type="button" data-action="camera">[C] Camera</button>
-        <button type="button" data-action="board">[L] Board</button>
-        <button type="button" data-action="name">[N] Name</button>
+        <button type="button" data-action="mouse">🖱️ Mouse</button>
+        <button type="button" data-action="camera">📷 Camera</button>
+        <button type="button" data-action="board">🏆 Board</button>
+        <button type="button" data-action="name">✏️ Name</button>
       </div>
 
     </div>
@@ -44,30 +60,36 @@
 
   </div>
 
-  <!-- ── Bottom tab bar (full width) ───────────────────────────────────── -->
-  <nav id="tab-bar">
-    <button class="tab active" data-tab="game" type="button">
-      <span class="tab-icon">🎮</span>
-      <span class="tab-label">GAME</span>
-    </button>
-    <button class="tab" data-tab="leaderboard" type="button">
-      <span class="tab-icon">🏆</span>
-      <span class="tab-label">LEADERBOARD</span>
-    </button>
-  </nav>
-
   <!-- ── How to Play button (fixed top-right) ──────────────────────────── -->
   <button id="btn-help" type="button" title="How to Play">❓ How to Play</button>
 
-  <!-- ── Floating music player (bottom-right) ───────────────────────────── -->
-  <div id="music-float">
-    <div id="music-controls-row">
-      <button id="btn-prev" type="button">⏮</button>
-      <button id="btn-play" type="button">▶</button>
-      <button id="btn-next" type="button">⏭</button>
-      <input id="vol-slider" type="range" min="0" max="100" value="20" />
+  <!-- ── Bottom chrome: music bar + tab bar ────────────────────────────── -->
+  <div id="bottom-chrome">
+
+    <!-- Music bar (inline, full-width) -->
+    <div id="music-float">
+      <div id="music-controls-row">
+        <button id="btn-prev" type="button">⏮</button>
+        <button id="btn-play" type="button">▶</button>
+        <button id="btn-next" type="button">⏭</button>
+        <input id="vol-slider" type="range" min="0" max="100" value="20" />
+        <span id="vol-ios-note" style="display:none">🔊 hardware</span>
+        <span id="track-name"></span>
+      </div>
     </div>
-    <span id="track-name"></span>
+
+    <!-- Tab bar -->
+    <nav id="tab-bar">
+      <button class="tab active" data-tab="game" type="button">
+        <span class="tab-icon">🎮</span>
+        <span class="tab-label">GAME</span>
+      </button>
+      <button class="tab" data-tab="leaderboard" type="button">
+        <span class="tab-icon">🏆</span>
+        <span class="tab-label">LEADERBOARD</span>
+      </button>
+    </nav>
+
   </div>
 
   <video id="hand-feed" style="display:none" playsinline></video>
@@ -79,27 +101,45 @@
       <p id="intro-subtitle">Remember where the elephant's eye is — then place it from memory!</p>
 
       <div id="intro-modes">
-        <div class="intro-mode">
+
+        <!-- Desktop: Mouse mode -->
+        <div class="intro-mode desktop-only">
           <div class="intro-mode-header">🖱️ Mouse Mode</div>
           <ol class="intro-steps">
-            <li>Press <kbd>M</kbd> or click <strong>[M] Mouse</strong> to start</li>
+            <li>Click <strong>Mouse</strong> or press <kbd>M</kbd> to start</li>
             <li>The elephant appears — <strong>memorise the eye position</strong></li>
             <li>The elephant hides — move your mouse to where the eye was</li>
             <li>Click or press <kbd>Space</kbd> to drop the eye</li>
             <li>See how close you were!</li>
           </ol>
         </div>
+
+        <!-- Mobile: Tap mode -->
+        <div class="intro-mode mobile-only">
+          <div class="intro-mode-header">👆 Tap Mode</div>
+          <ol class="intro-steps">
+            <li>Tap <strong>Tap</strong> to start</li>
+            <li>The elephant appears — <strong>memorise the eye position</strong></li>
+            <li>The elephant hides — tap where the eye was</li>
+            <li>A marker shows your position — adjust by tapping again</li>
+            <li>Press <strong>Drop Eye ✊</strong> to confirm</li>
+            <li>See how close you were!</li>
+          </ol>
+        </div>
+
         <div class="intro-divider"></div>
+
         <div class="intro-mode">
           <div class="intro-mode-header">📷 Camera Mode</div>
           <ol class="intro-steps">
-            <li>Press <kbd>C</kbd> or click <strong>[C] Camera</strong> to start</li>
+            <li>Tap <strong>Camera</strong> to start</li>
             <li>The elephant appears — <strong>memorise the eye position</strong></li>
             <li>The elephant hides — point your <strong>index finger</strong> to where the eye was</li>
             <li><strong>Pinch</strong> your fingers to drop the eye</li>
             <li>See how close you were!</li>
           </ol>
         </div>
+
       </div>
 
       <button id="intro-confirm" type="button">ක්‍රීඩා කරමු! &nbsp;Let's Play!</button>

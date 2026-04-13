@@ -1,23 +1,39 @@
 *, *::before, *::after { box-sizing: border-box; }
 
+html { height: 100%; }
+
 body {
   margin: 0;
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100vh;           /* fallback */
+  height: 100dvh;          /* dynamic viewport — accounts for iOS browser chrome */
+  overflow: hidden;        /* body never scrolls; .page-content scrolls instead */
   background: #0f172a;
   align-items: center;
 }
 
-/* ── Page content (above tab bar) ────────────────────────────────────────── */
+/* ── Page content (scrollable area above bottom chrome) ──────────────────── */
 .page-content {
   flex: 1;
+  min-height: 0;           /* required for flex children to be scrollable */
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   width: 100%;
   padding: 20px 0 8px;
+}
+
+/* ── Bottom chrome wrapper (music bar + tab bar) ─────────────────────────── */
+#bottom-chrome {
+  flex-shrink: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: env(safe-area-inset-bottom, 0px); /* iOS home indicator */
 }
 
 /* ── Game view ────────────────────────────────────────────────────────────── */
@@ -33,8 +49,8 @@ body {
 /* ── Status bar (above canvas) ────────────────────────────────────────────── */
 #game-status {
   display: flex;
-  align-items: center;
-  gap: 14px;
+  flex-direction: column;
+  gap: 4px;
   padding: 8px 14px;
   background: #0c111d;
   border: 1px solid #1f2937;
@@ -42,7 +58,18 @@ body {
   border-radius: 6px 6px 0 0;
 }
 
-#game-status.mode-hint { justify-content: center; }
+#game-status.mode-hint { align-items: center; }
+
+#status-row1 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+#status-row2 {
+  display: flex;
+  align-items: flex-start;
+}
 
 #status-label {
   font: bold 22px monospace;
@@ -51,7 +78,7 @@ body {
 
 #status-label.status-hit  { color: #f59e0b; }
 #status-label.status-miss { color: #ef4444; }
-#status-label.status-hint { color: #9ca3af; font: 15px monospace; font-weight: normal; }
+#status-label.status-hint { color: #9ca3af; font: 14px monospace; font-weight: normal; }
 
 #status-sub {
   color: #6b7280;
@@ -60,13 +87,20 @@ body {
 }
 
 #status-msg {
-  flex: 1;
   color: #f9fafb;
-  font: 16px sans-serif;
-  text-align: right;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font: 15px / 1.4 sans-serif;
+  white-space: normal;
+}
+
+/* Hide empty row2 when there's no message (hint state) */
+#game-status.mode-hint #status-row2 { display: none; }
+
+@media (max-width: 520px) {
+  #game-status { padding: 6px 10px; gap: 3px; }
+  #status-label { font-size: 18px; }
+  #status-label.status-hint { font-size: 12px; }
+  #status-sub { font-size: 12px; }
+  #status-msg { font-size: 13px; }
 }
 
 /* ── Canvas frame with gold corner brackets ───────────────────────────────── */
@@ -130,6 +164,100 @@ canvas {
 }
 
 #result-actions button:hover { color: #f59e0b; border-color: #f59e0b; }
+
+/* ── Idle mode buttons (below canvas in IDLE state) ──────────────────────── */
+#idle-actions {
+  display: flex;
+  gap: 12px;
+  padding: 12px 2px 4px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+#idle-actions button {
+  background: none;
+  border: 2px solid #374151;
+  color: #9ca3af;
+  font: bold 15px monospace;
+  padding: 12px 28px;
+  border-radius: 8px;
+  cursor: pointer;
+  min-height: 48px;
+  min-width: 130px;
+  letter-spacing: 0.04em;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+#idle-actions button:hover,
+#idle-actions button.active {
+  color: #f59e0b;
+  border-color: #f59e0b;
+}
+
+#idle-actions button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+#idle-actions button.loading {
+  color: #f59e0b;
+  border-color: #f59e0b;
+  opacity: 1;
+  pointer-events: none;
+  position: relative;
+  padding-left: 40px;
+}
+
+#idle-actions button.loading::before {
+  content: '';
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 14px;
+  height: 14px;
+  border: 2px solid #f59e0b;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: translateY(-50%) rotate(360deg); }
+}
+
+#camera-error-msg {
+  color: #f87171;
+  font-size: 13px;
+  text-align: center;
+  margin: 4px 0 0;
+  padding: 0 8px;
+}
+
+/* ── Tap confirm button (mobile HIDDEN state) ─────────────────────────────── */
+#tap-confirm-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 10px 2px 4px;
+}
+
+#tap-confirm {
+  background: #f59e0b;
+  border: none;
+  border-radius: 8px;
+  color: #0f172a;
+  font: bold 16px monospace;
+  padding: 12px 40px;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  box-shadow: 0 2px 10px rgba(245, 158, 11, 0.4);
+  transition: background 0.15s;
+  /* Large tap target */
+  min-height: 48px;
+}
+
+#tap-confirm:active { background: #d97706; }
 
 /* ── Leaderboard HTML view ────────────────────────────────────────────────── */
 #leaderboard-view {
@@ -245,27 +373,21 @@ canvas {
   box-shadow: 0 3px 12px rgba(245, 158, 11, 0.65);
 }
 
-/* ── Floating music player (bottom-right) ─────────────────────────────────── */
+/* ── Music bar (inline, full-width, above tab bar) ───────────────────────── */
 #music-float {
-  position: fixed;
-  bottom: 72px;
-  right: 20px;
-  background: #111827;
-  border: 1px solid #2d3748;
-  border-radius: 12px;
-  padding: 10px 14px;
+  width: 100%;
+  background: #0c111d;
+  border-top: 1px solid #1f2937;
+  padding: 6px 16px;
   display: flex;
-  flex-direction: column;
-  gap: 5px;
-  min-width: 190px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-  z-index: 50;
+  align-items: center;
 }
 
 #music-controls-row {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  width: 100%;
 }
 
 #music-float button {
@@ -276,6 +398,7 @@ canvas {
   border-radius: 6px;
   cursor: pointer;
   font-size: 13px;
+  flex-shrink: 0;
   transition: color 0.15s, border-color 0.15s;
 }
 
@@ -283,13 +406,16 @@ canvas {
 
 #vol-slider { width: 58px; accent-color: #f59e0b; flex-shrink: 0; }
 
+#vol-ios-note { color: #4b5563; font: 10px monospace; flex-shrink: 0; }
+
 #track-name {
+  flex: 1;
   color: #4b5563;
   font: 10px monospace;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 170px;
+  min-width: 0;
 }
 
 /* ── Utility ──────────────────────────────────────────────────────────────── */
@@ -300,11 +426,13 @@ canvas {
   position: fixed;
   inset: 0;
   display: flex;
-  align-items: center;
+  align-items: flex-start;     /* flex-start so the box can scroll out of view */
   justify-content: center;
   background: rgba(0, 0, 0, 0.82);
   z-index: 200;
-  padding: 16px;
+  padding: 15vh 16px;          /* top/bottom padding centres it on normal viewports */
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 #intro-overlay.hidden { display: none; }
@@ -313,31 +441,34 @@ canvas {
   background: #111827;
   border: 2px solid #f59e0b;
   border-radius: 10px;
-  padding: 32px 36px;
+  padding: 28px;
   max-width: 680px;
   width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 16px;
+  margin: auto;                /* keeps it vertically centred when content fits */
 }
 
 #intro-title {
   margin: 0;
   color: #f59e0b;
-  font: bold 24px monospace;
+  font: bold 22px monospace;
   letter-spacing: 0.04em;
+  text-align: center;
 }
 
 #intro-subtitle {
   margin: 0;
   color: #9ca3af;
-  font: 14px monospace;
+  font: 13px monospace;
   text-align: center;
 }
 
 #intro-modes {
   display: flex;
+  flex-direction: row;
   gap: 0;
   width: 100%;
   border: 1px solid #1f2937;
@@ -347,8 +478,9 @@ canvas {
 
 .intro-mode {
   flex: 1;
-  padding: 20px 20px 24px;
+  padding: 18px 16px 22px;
   background: #0f172a;
+  min-width: 0;
 }
 
 .intro-divider {
@@ -357,19 +489,25 @@ canvas {
   flex-shrink: 0;
 }
 
+/* Show desktop-only / mobile-only intro sections based on body class */
+.mobile-only  { display: none; }
+.desktop-only { display: block; }
+body.is-mobile .mobile-only  { display: block; }
+body.is-mobile .desktop-only { display: none; }
+
 .intro-mode-header {
   color: #f59e0b;
-  font: bold 14px monospace;
+  font: bold 13px monospace;
   letter-spacing: 0.06em;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 }
 
 .intro-steps {
   margin: 0;
-  padding-left: 18px;
+  padding-left: 16px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 7px;
 }
 
 .intro-steps li {
@@ -388,6 +526,25 @@ kbd {
   font: 12px monospace;
   color: #f59e0b;
   line-height: 1.6;
+}
+
+/* ── Mobile: stack modes vertically ──────────────────────────────────────── */
+@media (max-width: 520px) {
+  #intro-overlay { padding: 12px 12px; }
+
+  #intro-box { padding: 20px 16px; gap: 14px; border-radius: 8px; }
+
+  #intro-title { font-size: 18px; }
+
+  #intro-modes { flex-direction: column; }
+
+  .intro-divider { width: 100%; height: 1px; }
+
+  .intro-mode { padding: 16px 14px; }
+
+  .intro-mode-header { font-size: 13px; margin-bottom: 10px; }
+
+  .intro-steps li { font-size: 13px; }
 }
 
 #intro-confirm {
