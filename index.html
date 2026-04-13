@@ -17,6 +17,14 @@
   </div>
   <video id="hand-feed" style="display:none" playsinline></video>
 
+  <div id="name-overlay" class="hidden">
+    <div id="name-box">
+      <p>ඔයාගේ නම දාන්න</p>
+      <input id="name-input" type="text" maxlength="20" placeholder="Your name" autocomplete="off" />
+      <button id="name-confirm">OK</button>
+    </div>
+  </div>
+
   <!-- MediaPipe loaded as classic scripts (exposes window.Hands, window.Camera).
        Must come before the ES module so globals are available when game.js runs. -->
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>

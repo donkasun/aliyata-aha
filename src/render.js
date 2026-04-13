@@ -86,9 +86,62 @@ function drawWebcamOverlay(ctx, handInput, canvasW, canvasH) {
   }
 }
 
+// ─── Leaderboard overlay ──────────────────────────────────────────────────────
+
+function drawLeaderboard(ctx, leaderboard, canvasW, canvasH) {
+  const PW = 320, PH = Math.min(leaderboard.length * 36 + 80, canvasH - 40);
+  const PX = (canvasW - PW) / 2;
+  const PY = (canvasH - PH) / 2;
+
+  // Background panel
+  ctx.fillStyle = 'rgba(17,24,39,0.95)';
+  ctx.beginPath();
+  ctx.roundRect(PX, PY, PW, PH, 8);
+  ctx.fill();
+  ctx.strokeStyle = '#f59e0b';
+  ctx.lineWidth   = 2;
+  ctx.stroke();
+
+  // Title
+  ctx.fillStyle    = '#f59e0b';
+  ctx.font         = 'bold 18px monospace';
+  ctx.textAlign    = 'center';
+  ctx.textBaseline = 'top';
+  ctx.fillText('🏆  Leaderboard', PX + PW / 2, PY + 14);
+
+  if (leaderboard.length === 0) {
+    ctx.fillStyle = '#9ca3af';
+    ctx.font      = '14px monospace';
+    ctx.fillText('No scores yet', PX + PW / 2, PY + 50);
+    return;
+  }
+
+  const medals = ['🥇', '🥈', '🥉'];
+  leaderboard.forEach((entry, i) => {
+    const rowY = PY + 54 + i * 34;
+    const rank = medals[i] ?? `${i + 1}.`;
+
+    ctx.textAlign    = 'left';
+    ctx.font         = '14px monospace';
+    ctx.fillStyle    = i === 0 ? '#f59e0b' : TEXT_COLOR;
+    ctx.fillText(`${rank}  ${entry.displayName ?? 'Anonymous'}`, PX + 16, rowY);
+
+    ctx.textAlign    = 'right';
+    ctx.fillStyle    = '#22c55e';
+    ctx.fillText(`${entry.bestScore ?? 0}`, PX + PW - 16, rowY);
+  });
+
+  // Dismiss hint
+  ctx.fillStyle    = '#6b7280';
+  ctx.font         = '11px monospace';
+  ctx.textAlign    = 'center';
+  ctx.textBaseline = 'bottom';
+  ctx.fillText('[L] close', PX + PW / 2, PY + PH - 8);
+}
+
 // ─── Main draw function ───────────────────────────────────────────────────────
 
-export function draw(ctx, { state, round, debugMode, mode, cameraErrorMsg, handInput }) {
+export function draw(ctx, { state, round, debugMode, mode, cameraErrorMsg, handInput, leaderboard = [], showLeaderboard = false }) {
   const { width, height } = ctx.canvas;
 
   // Clear
@@ -209,6 +262,9 @@ export function draw(ctx, { state, round, debugMode, mode, cameraErrorMsg, handI
 
     // Instruction.
     ctx.font = '16px monospace';
-    ctx.fillText('SPACE  [M] Mouse  [C] Camera', 20, 130);
+    ctx.fillText('SPACE  [M] Mouse  [C] Camera  [L] Board  [N] Name', 20, 130);
+
+    // Leaderboard overlay (toggled with L key).
+    if (showLeaderboard) drawLeaderboard(ctx, leaderboard, width, height);
   }
 }

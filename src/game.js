@@ -3,8 +3,10 @@ import { createMouseInput } from './input-mouse.js';
 import { createHandInput }  from './input-hand.js';
 import { draw }             from './render.js';
 import { generateSeed, generateTransform, getEyeWorld } from './board.js';
-import { createPlayer } from './audio.js';
-import { getMessage }   from './messages.js';
+import { createPlayer }        from './audio.js';
+import { getMessage }          from './messages.js';
+import { getName, setName }    from './name-store.js';
+import { submitScore, subscribeLeaderboard } from './score.js';
 
 const canvas = document.getElementById('game-canvas');
 const ctx    = canvas.getContext('2d');
@@ -49,6 +51,39 @@ tryPlayMusic();
 // If autoplay was blocked, first key press or click still starts playback.
 window.addEventListener('keydown', () => { tryPlayMusic(); }, { once: true });
 window.addEventListener('click', () => { tryPlayMusic(); }, { once: true });
+
+// ─── Name overlay ────────────────────────────────────────────────────────────
+
+const nameOverlay  = document.getElementById('name-overlay');
+const nameInput    = document.getElementById('name-input');
+const nameConfirm  = document.getElementById('name-confirm');
+
+function showNamePrompt(onDone) {
+  nameInput.value = getName();
+  nameOverlay.classList.remove('hidden');
+  nameInput.focus();
+
+  function confirm() {
+    const name = nameInput.value.trim();
+    if (!name) return;
+    setName(name);
+    nameOverlay.classList.add('hidden');
+    nameConfirm.removeEventListener('click', confirm);
+    nameInput.removeEventListener('keydown', onEnter);
+    onDone(name);
+  }
+  function onEnter(e) { if (e.key === 'Enter') confirm(); }
+
+  nameConfirm.addEventListener('click', confirm);
+  nameInput.addEventListener('keydown', onEnter);
+}
+
+// ─── Leaderboard ─────────────────────────────────────────────────────────────
+
+let leaderboard     = [];
+let showLeaderboard = false;
+
+subscribeLeaderboard((rows) => { leaderboard = rows; });
 
 // ─── Mode ────────────────────────────────────────────────────────────────────
 
@@ -111,7 +146,8 @@ function transition(newState) {
   }
 
   if (newState === 'RESULT') {
-    round.guess = input.getCursor();
+    round.guess     = input.getCursor();
+    round.timeTaken = (Date.now() - hiddenAt) / 1000;
 
     const dx       = round.guess.x - round.trueEyeWorld.x;
     const dy       = round.guess.y - round.trueEyeWorld.y;
@@ -123,12 +159,34 @@ function transition(newState) {
     round.message  = getMessage(round.distance, round.hit, dx, dy, gx, gy);
     if (round.hit) new Audio('sounds/Koha.mp3').play().catch(() => {});
     console.log(`Seed: ${round.seed} | Distance: ${round.distance}px | EYE_SVG: { x: ${gx}, y: ${gy} }`);
+
+    // Submit score — prompt for name first if not set.
+    const submit = (name) => {
+      submitScore({ displayName: name, distance: round.distance, timeTaken: round.timeTaken, seed: round.seed })
+        .then((score) => { if (score !== null) round.score = score; })
+        .catch(console.error);
+    };
+    if (!getName()) {
+      showNamePrompt(submit);
+    } else {
+      submit(getName());
+    }
   }
 }
 
 // ─── Mode switching (M / C keys, IDLE only) ──────────────────────────────────
 
 window.addEventListener('keydown', (e) => {
+  if (e.code === 'KeyL' && state === 'RESULT') {
+    showLeaderboard = !showLeaderboard;
+    return;
+  }
+  if (e.code === 'KeyN' && state === 'RESULT') {
+    showNamePrompt((name) => {
+      submitScore({ displayName: name, distance: round.distance, timeTaken: round.timeTaken, seed: round.seed }).catch(console.error);
+    });
+    return;
+  }
   if (state !== 'IDLE' && state !== 'RESULT') return;
   if (e.code === 'KeyM') {
     mode  = 'mouse';
@@ -162,7 +220,7 @@ async function switchToHand() {
 // ─── Render loop ──────────────────────────────────────────────────────────────
 
 function loop() {
-  draw(ctx, { state, round, debugMode: input.isDebugMode(), mode, cameraErrorMsg, handInput });
+  draw(ctx, { state, round, debugMode: input.isDebugMode(), mode, cameraErrorMsg, handInput, leaderboard, showLeaderboard });
   requestAnimationFrame(loop);
 }
 
