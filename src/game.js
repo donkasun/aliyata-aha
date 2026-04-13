@@ -41,11 +41,23 @@ btnPlay.addEventListener('click', () => {
 });
 document.getElementById('btn-prev').addEventListener('click', () => { player.prev(); updateTrackName(); });
 document.getElementById('btn-next').addEventListener('click', () => { player.next(); updateTrackName(); });
-const volSlider = document.getElementById('vol-slider');
-volSlider.value = Math.round(player.getVolume() * 100); // sync slider to actual default
-volSlider.addEventListener('input', (e) => {
-  player.setVolume(e.target.value / 100);
-});
+const volSlider  = document.getElementById('vol-slider');
+const volIosNote = document.getElementById('vol-ios-note');
+
+// iOS Safari ignores audio.volume — hardware buttons control volume there.
+const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) ||
+              (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+if (isIOS) {
+  volSlider.style.display  = 'none';
+  volIosNote.style.display = 'inline';
+} else {
+  volSlider.value = Math.round(player.getVolume() * 100);
+  // 'input' fires during drag; 'change' fires on release (fallback for some mobile browsers).
+  const onVol = (e) => player.setVolume(e.target.value / 100);
+  volSlider.addEventListener('input',  onVol);
+  volSlider.addEventListener('change', onVol);
+}
 
 updateTrackName();
 syncPlayButton();

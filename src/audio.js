@@ -16,14 +16,11 @@ function shuffle(arr) {
   return arr;
 }
 
-// Touch/mobile devices need a higher default volume to be audible.
-const DEFAULT_VOLUME = window.matchMedia('(pointer: coarse)').matches ? 0.65 : 0.20;
-
 export function createPlayer() {
   const queue   = shuffle([...TRACKS]);
   let   index   = 0;
   const audio   = new Audio();
-  audio.volume  = DEFAULT_VOLUME;
+  audio.volume  = 0.20;
 
   function load(i) {
     index     = ((i % queue.length) + queue.length) % queue.length;

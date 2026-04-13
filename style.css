@@ -283,6 +283,8 @@ canvas {
 
 #vol-slider { width: 58px; accent-color: #f59e0b; flex-shrink: 0; }
 
+#vol-ios-note { color: #4b5563; font: 10px monospace; flex-shrink: 0; }
+
 #track-name {
   color: #4b5563;
   font: 10px monospace;
