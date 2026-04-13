@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aliyata Aha</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="page-content">
+
+    <!-- ── Game view ───────────────────────────────────────────────────── -->
+    <div id="game-view">
+
+      <!-- Status bar: above canvas — HIDDEN hint or RESULT HIT/MISS + message -->
+      <div id="game-status" class="hidden">
+        <span id="status-label"></span>
+        <span id="status-sub"></span>
+        <span id="status-msg"></span>
+      </div>
+
+      <div class="game-frame">
+        <canvas id="game-canvas" width="1024" height="640"></canvas>
+      </div>
+
+      <!-- Action chips: below canvas — shown in RESULT state -->
+      <div id="result-actions" class="hidden">
+        <button type="button" data-action="again">▶ Again</button>
+        <button type="button" data-action="mouse">[M] Mouse</button>
+        <button type="button" data-action="camera">[C] Camera</button>
+        <button type="button" data-action="board">[L] Board</button>
+        <button type="button" data-action="name">[N] Name</button>
+      </div>
+
+    </div>
+
+    <!-- ── Leaderboard view ────────────────────────────────────────────── -->
+    <div id="leaderboard-view" class="hidden">
+      <div id="leaderboard-panel">
+        <h2 class="lb-title">🏆 Leaderboard</h2>
+        <div id="lb-rows"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── Bottom tab bar (full width) ───────────────────────────────────── -->
+  <nav id="tab-bar">
+    <button class="tab active" data-tab="game" type="button">
+      <span class="tab-icon">🎮</span>
+      <span class="tab-label">GAME</span>
+    </button>
+    <button class="tab" data-tab="leaderboard" type="button">
+      <span class="tab-icon">🏆</span>
+      <span class="tab-label">LEADERBOARD</span>
+    </button>
+  </nav>
+
+  <!-- ── How to Play button (fixed top-right) ──────────────────────────── -->
+  <button id="btn-help" type="button" title="How to Play">❓ How to Play</button>
+
+  <!-- ── Floating music player (bottom-right) ───────────────────────────── -->
+  <div id="music-float">
+    <div id="music-controls-row">
+      <button id="btn-prev" type="button">⏮</button>
+      <button id="btn-play" type="button">▶</button>
+      <button id="btn-next" type="button">⏭</button>
+      <input id="vol-slider" type="range" min="0" max="100" value="20" />
+    </div>
+    <span id="track-name"></span>
+  </div>
+
+  <video id="hand-feed" style="display:none" playsinline></video>
+
+  <!-- ── How to Play overlay (shown once on first visit) ─────────────────── -->
+  <div id="intro-overlay">
+    <div id="intro-box">
+      <h2 id="intro-title">🐘 How to Play</h2>
+      <p id="intro-subtitle">Remember where the elephant's eye is — then place it from memory!</p>
+
+      <div id="intro-modes">
+        <div class="intro-mode">
+          <div class="intro-mode-header">🖱️ Mouse Mode</div>
+          <ol class="intro-steps">
+            <li>Press <kbd>M</kbd> or click <strong>[M] Mouse</strong> to start</li>
+            <li>The elephant appears — <strong>memorise the eye position</strong></li>
+            <li>The elephant hides — move your mouse to where the eye was</li>
+            <li>Click or press <kbd>Space</kbd> to drop the eye</li>
+            <li>See how close you were!</li>
+          </ol>
+        </div>
+        <div class="intro-divider"></div>
+        <div class="intro-mode">
+          <div class="intro-mode-header">📷 Camera Mode</div>
+          <ol class="intro-steps">
+            <li>Press <kbd>C</kbd> or click <strong>[C] Camera</strong> to start</li>
+            <li>The elephant appears — <strong>memorise the eye position</strong></li>
+            <li>The elephant hides — point your <strong>index finger</strong> to where the eye was</li>
+            <li><strong>Pinch</strong> your fingers to drop the eye</li>
+            <li>See how close you were!</li>
+          </ol>
+        </div>
+      </div>
+
+      <button id="intro-confirm" type="button">ක්‍රීඩා කරමු! &nbsp;Let's Play!</button>
+    </div>
+  </div>
+
+  <!-- ── Name input overlay ─────────────────────────────────────────────── -->
+  <div id="name-overlay" class="hidden">
+    <div id="name-box">
+      <p>ඔයාගේ නම දාන්න</p>
+      <input id="name-input" type="text" maxlength="20" placeholder="Your name" autocomplete="off" />
+      <span id="name-error"></span>
+      <button id="name-confirm">OK</button>
+    </div>
+  </div>
+
+  <!-- MediaPipe loaded as classic scripts (exposes window.Hands, window.Camera).
+       Must come before the ES module so globals are available when game.js runs. -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+
+  <script type="module" src="src/game.js"></script>
+</body>
+</html>
