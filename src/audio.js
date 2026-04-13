@@ -23,9 +23,9 @@ export function createPlayer() {
   audio.volume  = 0.20;
 
   function load(i) {
-    index       = ((i % queue.length) + queue.length) % queue.length;
-    audio.src   = queue[index];
-    audio.load();
+    index     = ((i % queue.length) + queue.length) % queue.length;
+    audio.src = queue[index];
+    // No explicit audio.load() — play() handles loading when src changes.
   }
 
   audio.addEventListener('ended', () => { load(index + 1); audio.play().catch(() => {}); });
