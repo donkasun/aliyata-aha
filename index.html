@@ -14,9 +14,13 @@
 
       <!-- Status bar: above canvas — HIDDEN hint or RESULT HIT/MISS + message -->
       <div id="game-status" class="hidden">
-        <span id="status-label"></span>
-        <span id="status-sub"></span>
-        <span id="status-msg"></span>
+        <div id="status-row1">
+          <span id="status-label"></span>
+          <span id="status-sub"></span>
+        </div>
+        <div id="status-row2">
+          <span id="status-msg"></span>
+        </div>
       </div>
 
       <div class="game-frame">
@@ -37,10 +41,10 @@
       <!-- Action chips: below canvas — shown in RESULT state -->
       <div id="result-actions" class="hidden">
         <button type="button" data-action="again">▶ Again</button>
-        <button type="button" data-action="mouse">[M] Mouse</button>
-        <button type="button" data-action="camera">[C] Camera</button>
-        <button type="button" data-action="board">[L] Board</button>
-        <button type="button" data-action="name">[N] Name</button>
+        <button type="button" data-action="mouse">🖱️ Mouse</button>
+        <button type="button" data-action="camera">📷 Camera</button>
+        <button type="button" data-action="board">🏆 Board</button>
+        <button type="button" data-action="name">✏️ Name</button>
       </div>
 
     </div>

@@ -200,6 +200,18 @@ const idleActions     = document.getElementById('idle-actions');
 const resultActions   = document.getElementById('result-actions');
 const tapConfirmWrap  = document.getElementById('tap-confirm-wrap');
 
+// Apply mobile-specific labels to result buttons once at startup.
+if (isMobile) {
+  resultActions.querySelector('[data-action="mouse"]').textContent  = '👆 Tap';
+  resultActions.querySelector('[data-action="board"]').textContent  = '🏆 Board';
+  resultActions.querySelector('[data-action="name"]').textContent   = '✏️ Name';
+} else {
+  resultActions.querySelector('[data-action="mouse"]').textContent  = '[M] Mouse';
+  resultActions.querySelector('[data-action="camera"]').textContent = '[C] Camera';
+  resultActions.querySelector('[data-action="board"]').textContent  = '[L] Board';
+  resultActions.querySelector('[data-action="name"]').textContent   = '[N] Name';
+}
+
 document.getElementById('tap-confirm').addEventListener('click', () => {
   if (state === 'HIDDEN') handleCommit();
 });

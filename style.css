@@ -49,17 +49,27 @@ body {
 /* ── Status bar (above canvas) ────────────────────────────────────────────── */
 #game-status {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  flex-direction: column;
+  gap: 4px;
   padding: 8px 14px;
   background: #0c111d;
   border: 1px solid #1f2937;
   border-bottom: none;
   border-radius: 6px 6px 0 0;
-  flex-wrap: wrap;
 }
 
-#game-status.mode-hint { justify-content: center; flex-wrap: nowrap; }
+#game-status.mode-hint { align-items: center; }
+
+#status-row1 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+#status-row2 {
+  display: flex;
+  align-items: flex-start;
+}
 
 #status-label {
   font: bold 22px monospace;
@@ -77,33 +87,20 @@ body {
 }
 
 #status-msg {
-  flex: 1;
-  min-width: 0;
   color: #f9fafb;
-  font: 15px sans-serif;
-  text-align: right;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font: 15px / 1.4 sans-serif;
+  white-space: normal;
 }
 
+/* Hide empty row2 when there's no message (hint state) */
+#game-status.mode-hint #status-row2 { display: none; }
+
 @media (max-width: 520px) {
-  #game-status { gap: 6px; padding: 6px 10px; }
-
+  #game-status { padding: 6px 10px; gap: 3px; }
   #status-label { font-size: 18px; }
-
   #status-label.status-hint { font-size: 12px; }
-
   #status-sub { font-size: 12px; }
-
-  /* On small screens let the Sinhala message wrap below label+sub */
-  #status-msg {
-    width: 100%;
-    text-align: left;
-    white-space: normal;
-    font-size: 13px;
-    line-height: 1.4;
-  }
+  #status-msg { font-size: 13px; }
 }
 
 /* ── Canvas frame with gold corner brackets ───────────────────────────────── */
