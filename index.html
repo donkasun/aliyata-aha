@@ -8,6 +8,13 @@
 </head>
 <body>
   <canvas id="game-canvas" width="1024" height="640"></canvas>
+  <div id="music-controls">
+    <button id="btn-prev" type="button">⏮</button>
+    <button id="btn-play" type="button">▶</button>
+    <button id="btn-next" type="button">⏭</button>
+    <input id="vol-slider" type="range" min="0" max="100" value="50" />
+    <span id="track-name"></span>
+  </div>
   <video id="hand-feed" style="display:none" playsinline></video>
 
   <!-- MediaPipe loaded as classic scripts (exposes window.Hands, window.Camera).

@@ -3,9 +3,36 @@ import { createMouseInput } from './input-mouse.js';
 import { createHandInput }  from './input-hand.js';
 import { draw }             from './render.js';
 import { generateSeed, generateTransform, getEyeWorld } from './board.js';
+import { createPlayer } from './audio.js';
 
 const canvas = document.getElementById('game-canvas');
 const ctx    = canvas.getContext('2d');
+
+// ─── Music ───────────────────────────────────────────────────────────────────
+const player = createPlayer();
+
+function updateTrackName() {
+  document.getElementById('track-name').textContent = player.trackName();
+}
+
+const btnPlay = document.getElementById('btn-play');
+btnPlay.textContent = player.isPaused() ? '▶' : '⏸';
+
+btnPlay.addEventListener('click', () => {
+  player.toggle();
+  btnPlay.textContent = player.isPaused() ? '▶' : '⏸';
+});
+document.getElementById('btn-prev').addEventListener('click', () => { player.prev(); updateTrackName(); });
+document.getElementById('btn-next').addEventListener('click', () => { player.next(); updateTrackName(); });
+document.getElementById('vol-slider').addEventListener('input', (e) => {
+  player.setVolume(e.target.value / 100);
+});
+
+// Auto-play on first user interaction (browser autoplay policy).
+window.addEventListener('keydown', () => { player.play(); updateTrackName(); btnPlay.textContent = player.isPaused() ? '▶' : '⏸'; }, { once: true });
+window.addEventListener('click', () => { player.play(); updateTrackName(); btnPlay.textContent = player.isPaused() ? '▶' : '⏸'; }, { once: true });
+
+updateTrackName();
 
 // ─── Mode ────────────────────────────────────────────────────────────────────
 
