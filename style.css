@@ -394,7 +394,7 @@ canvas {
 .lb-name s {
   text-decoration-line:  line-through;
   text-decoration-style: double;
-  text-decoration-color: #ef4444;
+  text-decoration-color: #fef3c7;
 }
 
 .lb-badword { color: #ef4444; font: bold 11px monospace; letter-spacing: 0.05em; }
