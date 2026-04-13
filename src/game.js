@@ -10,6 +10,8 @@ import { isBadName }           from './name-filter.js';
 import { submitScore, subscribeLeaderboard, isNameTaken } from './score.js';
 import { track, auth, isDev }  from './firebase.js';
 
+let roundsThisSession = 0;
+
 const canvas   = document.getElementById('game-canvas');
 const ctx      = canvas.getContext('2d');
 const isMobile = window.matchMedia('(pointer: coarse)').matches;
@@ -134,6 +136,7 @@ function showNamePrompt(onDone) {
     }
 
     setName(name);
+    track('name_set');
     nameOverlay.classList.add('hidden');
     nameConfirm.disabled = false;
     nameConfirm.removeEventListener('click', confirm);
@@ -356,6 +359,7 @@ resultActions.addEventListener('click', (e) => {
       lbView.classList.remove('hidden');
     } else {
       showLeaderboard = !showLeaderboard;
+      if (showLeaderboard) track('leaderboard_viewed', { source: 'keyboard' });
     }
   } else if (action === 'name') {
     showNamePrompt((name) => {
@@ -379,6 +383,7 @@ document.querySelectorAll('.tab').forEach(tab => {
     } else {
       gameView.classList.add('hidden');
       lbView.classList.remove('hidden');
+      track('leaderboard_viewed', { source: 'tab' });
     }
   });
 });
@@ -457,7 +462,8 @@ function transition(newState) {
 
   if (newState === 'REVEAL') {
     round = startNewRound();
-    track('round_start', { mode });
+    roundsThisSession++;
+    track('round_start', { mode, round_number: roundsThisSession });
     // Restart camera if we're in hand mode (was stopped after last RESULT).
     if (mode === 'hand' && handInput) {
       handInput.start().catch(() => {
@@ -484,10 +490,11 @@ function transition(newState) {
     round.message  = getMessage(round.distance, round.hit, dx, dy, gx, gy);
     if (round.hit) new Audio('sounds/Koha.mp3').play().catch(() => {});
     track('round_result', {
-      hit:       round.hit,
-      distance:  round.distance,
-      time_taken: Math.round(round.timeTaken * 10) / 10,
+      hit:          round.hit,
+      distance:     round.distance,
+      time_taken:   Math.round(round.timeTaken * 10) / 10,
       mode,
+      round_number: roundsThisSession,
     });
     console.log(`Seed: ${round.seed} | Distance: ${round.distance}px | EYE_SVG: { x: ${gx}, y: ${gy} }`);
 
