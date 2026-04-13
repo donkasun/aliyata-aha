@@ -3,10 +3,21 @@
 .vscode/
 .idea/
 .claude/
-./firebase/
 
 # macOS
 .DS_Store
 
 # Node (if ever added)
 node_modules/
+
+# Firebase build cache
+.firebase/
+
+# AI agent memory (internal Cursor preferences, not for public repo)
+AGENTS.md
+
+# AI agent planning docs (internal)
+docs/superpowers/
+
+# Firebase hosting deploy artifact
+public/
