@@ -281,7 +281,15 @@ resultActions.addEventListener('click', (e) => {
   } else if (action === 'camera') {
     switchToHand();
   } else if (action === 'board') {
-    showLeaderboard = !showLeaderboard;
+    if (isMobile) {
+      // On mobile use the full-screen HTML leaderboard tab.
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelector('.tab[data-tab="leaderboard"]').classList.add('active');
+      gameView.classList.add('hidden');
+      lbView.classList.remove('hidden');
+    } else {
+      showLeaderboard = !showLeaderboard;
+    }
   } else if (action === 'name') {
     showNamePrompt((name) => {
       submitScore({ displayName: name, distance: round.distance, timeTaken: round.timeTaken, seed: round.seed }).catch(console.error);
