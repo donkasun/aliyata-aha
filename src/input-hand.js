@@ -17,7 +17,7 @@ export function createHandInput(canvas) {
 
   hands.setOptions({
     maxNumHands:            1,
-    modelComplexity:        1,
+    modelComplexity:        0,   // lite model — faster on mobile
     minDetectionConfidence: 0.7,
     minTrackingConfidence:  0.5,
   });
@@ -48,7 +48,21 @@ export function createHandInput(canvas) {
     }
   });
 
-  let camera = null;
+  let camera  = null;
+  let warmed  = false;
+
+  /** Send one blank frame so MediaPipe downloads and compiles the model in the background. */
+  async function warmUp() {
+    if (warmed) return;
+    warmed = true;
+    try {
+      const offscreen = document.createElement('canvas');
+      offscreen.width = 1; offscreen.height = 1;
+      await hands.send({ image: offscreen });
+    } catch {
+      // ignore — warm-up is best-effort
+    }
+  }
 
   return {
     getCursor:       () => ({ ...cursor }),
@@ -56,6 +70,7 @@ export function createHandInput(canvas) {
     isDebugMode:     () => false,
     isHandVisible:   () => handVisible,
     getVideoElement: () => video,
+    warmUp,
 
     start() {
       return new Promise((resolve, reject) => {

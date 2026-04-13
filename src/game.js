@@ -203,6 +203,15 @@ const statusMsg       = document.getElementById('status-msg');
 const idleActions     = document.getElementById('idle-actions');
 const resultActions   = document.getElementById('result-actions');
 const tapConfirmWrap  = document.getElementById('tap-confirm-wrap');
+const cameraErrEl     = document.getElementById('camera-error-msg');
+
+let cameraErrTimer = null;
+function showCameraError(msg) {
+  cameraErrEl.textContent = msg;
+  cameraErrEl.classList.remove('hidden');
+  clearTimeout(cameraErrTimer);
+  cameraErrTimer = setTimeout(() => cameraErrEl.classList.add('hidden'), 4000);
+}
 
 // Apply mobile-specific labels to result buttons once at startup.
 if (isMobile) {
@@ -323,11 +332,23 @@ document.querySelectorAll('.tab').forEach(tab => {
 // ─── Mode ────────────────────────────────────────────────────────────────────
 
 let mode           = 'mouse';  // 'mouse' | 'hand'
-let handInput      = null;     // populated lazily in Task 2
+let handInput      = null;
 let cameraErrorMsg = '';
 let hiddenAt       = 0;  // timestamp when HIDDEN state was entered
 
 const mouseInput = createMouseInput(canvas);
+
+// Pre-load the MediaPipe model in the background so Camera mode starts quickly.
+// Only bother if the browser supports getUserMedia (i.e. secure context).
+if (navigator.mediaDevices?.getUserMedia) {
+  setTimeout(() => {
+    handInput = createHandInput(canvas);
+    handInput.onCommit(() => {
+      if (mode === 'hand' && state === 'HIDDEN' && Date.now() - hiddenAt >= 1500) handleCommit();
+    });
+    handInput.warmUp();
+  }, 3000);  // defer 3 s so it doesn't compete with page load
+}
 let   input      = mouseInput;
 
 // ─── State ───────────────────────────────────────────────────────────────────
@@ -492,20 +513,42 @@ window.addEventListener('keydown', (e) => {
   }
 });
 
+const cameraBtn = idleActions.querySelector('[data-idle="camera"]');
+
+function setCameraLoading(loading) {
+  cameraBtn.classList.toggle('loading', loading);
+  cameraBtn.disabled = loading;
+  idleActions.querySelector('[data-idle="mouse"]').disabled = loading;
+  if (loading) {
+    cameraBtn.dataset.originalText = cameraBtn.textContent;
+    cameraBtn.textContent = 'Starting…';
+  } else {
+    cameraBtn.textContent = cameraBtn.dataset.originalText || '📷 Camera';
+  }
+}
+
 async function switchToHand() {
+  if (!navigator.mediaDevices?.getUserMedia) {
+    showCameraError('📷 Camera requires HTTPS — not available over HTTP');
+    cameraErrorMsg = 'Camera needs HTTPS';
+    setTimeout(() => { cameraErrorMsg = ''; }, 4000);
+    return;
+  }
   if (!handInput) {
     handInput = createHandInput(canvas);
-    // Pinch only commits the guess — HIDDEN state only.
     handInput.onCommit(() => {
       if (mode === 'hand' && state === 'HIDDEN' && Date.now() - hiddenAt >= 1500) handleCommit();
     });
   }
+  setCameraLoading(true);
   try {
     await handInput.start();
     mode  = 'hand';
     input = handInput;
     transition('REVEAL');
   } catch {
+    setCameraLoading(false);
+    showCameraError('📷 Camera unavailable');
     cameraErrorMsg = 'Camera unavailable';
     setTimeout(() => { cameraErrorMsg = ''; }, 3000);
   }

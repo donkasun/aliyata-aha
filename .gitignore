@@ -2,6 +2,8 @@
 .cursor/
 .vscode/
 .idea/
+.claude/
+./firebase/
 
 # macOS
 .DS_Store

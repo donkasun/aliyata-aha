@@ -194,6 +194,47 @@ canvas {
   border-color: #f59e0b;
 }
 
+#idle-actions button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+#idle-actions button.loading {
+  color: #f59e0b;
+  border-color: #f59e0b;
+  opacity: 1;
+  pointer-events: none;
+  position: relative;
+  padding-left: 40px;
+}
+
+#idle-actions button.loading::before {
+  content: '';
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 14px;
+  height: 14px;
+  border: 2px solid #f59e0b;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: translateY(-50%) rotate(360deg); }
+}
+
+#camera-error-msg {
+  color: #f87171;
+  font-size: 13px;
+  text-align: center;
+  margin: 4px 0 0;
+  padding: 0 8px;
+}
+
 /* ── Tap confirm button (mobile HIDDEN state) ─────────────────────────────── */
 #tap-confirm-wrap {
   display: flex;
