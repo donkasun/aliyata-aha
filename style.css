@@ -448,6 +448,12 @@ canvas {
   flex-shrink: 0;
 }
 
+/* Show desktop-only / mobile-only intro sections based on body class */
+.mobile-only  { display: none; }
+.desktop-only { display: block; }
+body.is-mobile .mobile-only  { display: block; }
+body.is-mobile .desktop-only { display: none; }
+
 .intro-mode-header {
   color: #f59e0b;
   font: bold 13px monospace;

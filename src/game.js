@@ -12,6 +12,7 @@ import { track }               from './firebase.js';
 const canvas   = document.getElementById('game-canvas');
 const ctx      = canvas.getContext('2d');
 const isMobile = window.matchMedia('(pointer: coarse)').matches;
+if (isMobile) document.body.classList.add('is-mobile');
 
 // ─── Music ───────────────────────────────────────────────────────────────────
 const player = createPlayer();
