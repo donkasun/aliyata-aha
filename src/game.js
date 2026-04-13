@@ -6,8 +6,9 @@ import { generateSeed, generateTransform, getEyeWorld } from './board.js';
 import { createPlayer }        from './audio.js';
 import { getMessage }          from './messages.js';
 import { getName, setName }    from './name-store.js';
+import { isBadName }           from './name-filter.js';
 import { submitScore, subscribeLeaderboard, isNameTaken } from './score.js';
-import { track }               from './firebase.js';
+import { track, auth, isDev }  from './firebase.js';
 
 const canvas   = document.getElementById('game-canvas');
 const ctx      = canvas.getContext('2d');
@@ -151,12 +152,33 @@ function showNamePrompt(onDone) {
 let leaderboard     = [];
 let showLeaderboard = false;
 
-const lbRowsEl = document.getElementById('lb-rows');
-const MEDALS   = ['🥇', '🥈', '🥉'];
+const lbRowsEl    = document.getElementById('lb-rows');
+const lbMyRecord  = document.getElementById('lb-my-record');
+const lbMyName    = document.getElementById('lb-my-name');
+const lbMyRank    = document.getElementById('lb-my-rank');
+const lbMyScore   = document.getElementById('lb-my-score');
+const lbDivider   = document.querySelector('.lb-divider');
+const MEDALS      = ['🥇', '🥈', '🥉'];
 
 function renderHtmlLeaderboard(rows) {
   if (!lbRowsEl) return;
   lbRowsEl.textContent = ''; // clear previous rows
+
+  // Populate the sticky "Your Record" card
+  const myUidForCard = isDev ? 'dev-4' : auth.currentUser?.uid;
+  const myEntry      = myUidForCard ? rows.find(r => r.uid === myUidForCard) : null;
+  const myRank       = myEntry ? rows.indexOf(myEntry) + 1 : null;
+
+  if (myEntry) {
+    lbMyName.textContent  = myEntry.displayName ?? 'Anonymous';
+    lbMyScore.textContent = String(myEntry.bestScore ?? 0);
+    lbMyRank.textContent  = myRank ? `#${myRank} of ${rows.length}` : '';
+    lbMyRecord.classList.remove('hidden');
+    lbDivider?.classList.remove('hidden');
+  } else {
+    lbMyRecord.classList.add('hidden');
+    lbDivider?.classList.add('hidden');
+  }
 
   if (!rows.length) {
     const empty = document.createElement('div');
@@ -166,24 +188,56 @@ function renderHtmlLeaderboard(rows) {
     return;
   }
 
-  rows.forEach((entry, i) => {
-    const row = document.createElement('div');
-    row.className = 'lb-row' + (i === 0 ? ' gold' : i === 1 ? ' silver' : i === 2 ? ' bronze' : '');
+  // Reuse the same uid for in-list highlighting
+  const myUid = myUidForCard;
 
+  rows.forEach((entry, i) => {
+    const isMe = myUid && entry.uid === myUid;
+    const row  = document.createElement('div');
+    row.className = [
+      'lb-row',
+      i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '',
+      isMe ? 'me' : '',
+    ].filter(Boolean).join(' ');
+
+    // Rank chip — medal for top 3, plain number for the rest
     const rank = document.createElement('span');
     rank.className   = 'lb-rank';
-    rank.textContent = MEDALS[i] ?? `${i + 1}.`;
+    rank.textContent = MEDALS[i] ?? `${i + 1}`;
 
-    const name = document.createElement('span');
-    name.className   = 'lb-name';
-    name.textContent = entry.displayName ?? 'Anonymous';
+    // Name + distance stacked
+    const meta = document.createElement('span');
+    meta.className = 'lb-meta';
+
+    const name    = document.createElement('span');
+    name.className = 'lb-name';
+    const rawName  = entry.displayName ?? 'Anonymous';
+    if (isBadName(rawName)) {
+      const s = document.createElement('s');
+      s.textContent = rawName;
+      const badge = document.createElement('span');
+      badge.className   = 'lb-badword';
+      badge.textContent = '[BAD WORD]';
+      name.appendChild(s);
+      name.appendChild(document.createTextNode(' '));
+      name.appendChild(badge);
+    } else {
+      name.textContent = rawName + (isMe ? '  👈 you' : '');
+    }
+
+    const dist = document.createElement('span');
+    dist.className   = 'lb-dist';
+    dist.textContent = entry.bestDistance != null ? `${entry.bestDistance}px off` : '';
+
+    meta.appendChild(name);
+    meta.appendChild(dist);
 
     const score = document.createElement('span');
     score.className   = 'lb-score';
     score.textContent = String(entry.bestScore ?? 0);
 
     row.appendChild(rank);
-    row.appendChild(name);
+    row.appendChild(meta);
     row.appendChild(score);
     lbRowsEl.appendChild(row);
   });

@@ -16,13 +16,13 @@ body {
 /* ── Page content (scrollable area above bottom chrome) ──────────────────── */
 .page-content {
   flex: 1;
-  min-height: 0;           /* required for flex children to be scrollable */
+  min-height: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start; /* flex-start so long content is reachable from top */
   width: 100%;
   padding: 20px 0 8px;
 }
@@ -44,6 +44,7 @@ body {
   width: 100%;
   max-width: 1024px;
   padding: 0 16px;
+  margin: auto; /* vertically centres the game within the flex-start page-content */
 }
 
 /* ── Status bar (above canvas) ────────────────────────────────────────────── */
@@ -261,17 +262,78 @@ canvas {
 
 /* ── Leaderboard HTML view ────────────────────────────────────────────────── */
 #leaderboard-view {
+  flex: 1;               /* fill remaining height of .page-content */
+  min-height: 0;
   width: 100%;
-  max-width: 1024px;
-  padding: 24px 16px;
+  max-width: 680px;
+  padding: 16px 16px 0;
+  display: flex;
+  flex-direction: column;
 }
 
 #leaderboard-panel {
+  flex: 1;
+  min-height: 0;
   background: #111827;
   border: 2px solid #f59e0b;
   border-radius: 8px;
-  padding: 28px 24px;
-  min-height: 420px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;      /* clip; rows scroll inside */
+}
+
+/* Sticky header inside panel */
+.lb-panel-head {
+  flex-shrink: 0;
+  padding: 16px 16px 0;
+}
+
+/* My record card — pinned below title */
+#lb-my-record {
+  flex-shrink: 0;
+  margin: 12px 16px;
+  padding: 10px 14px;
+  background: #0d1f10;
+  border: 1px solid #22c55e;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+#lb-my-record.hidden { display: none; }
+.lb-my-label {
+  font: 11px monospace;
+  color: #4ade80;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  flex-shrink: 0;
+}
+.lb-my-name {
+  flex: 1;
+  font: bold 14px monospace;
+  color: #4ade80;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.lb-my-rank  { font: 12px monospace; color: #6b7280; flex-shrink: 0; }
+.lb-my-score { font: bold 15px monospace; color: #22c55e; flex-shrink: 0; }
+
+/* Divider between my-record and the list */
+.lb-divider {
+  flex-shrink: 0;
+  height: 1px;
+  background: #1f2937;
+  margin: 0 16px;
+}
+
+/* Scrollable rows list */
+#lb-rows {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 4px 0 8px;
 }
 
 .lb-title {
@@ -285,20 +347,45 @@ canvas {
 .lb-row {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 11px 12px;
-  border-bottom: 1px solid #1f2937;
+  gap: 10px;
+  padding: 8px 12px;
+  border-bottom: 1px solid #1a2332;
   color: #f9fafb;
 }
-
+.lb-row:nth-child(even) { background: #0d1420; }
 .lb-row:last-child { border-bottom: none; }
 .lb-row.gold   { color: #f59e0b; }
 .lb-row.silver { color: #d1d5db; }
 .lb-row.bronze { color: #cd7c4a; }
+.lb-row.me {
+  background: #0d1f10 !important;
+  border-left: 3px solid #22c55e;
+  padding-left: 9px;
+}
+.lb-row.me .lb-name { color: #4ade80; }
 
-.lb-rank  { font-size: 20px; width: 36px; text-align: center; flex-shrink: 0; }
-.lb-name  { flex: 1; font: 14px monospace; }
-.lb-score { color: #22c55e; font: bold 14px monospace; flex-shrink: 0; }
+.lb-rank {
+  font: bold 13px monospace;
+  width: 32px;
+  text-align: center;
+  flex-shrink: 0;
+  color: #6b7280;
+}
+.lb-row.gold   .lb-rank,
+.lb-row.silver .lb-rank,
+.lb-row.bronze .lb-rank { font-size: 20px; color: inherit; }
+
+.lb-meta  { flex: 1; display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.lb-name  { font: 14px monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lb-dist  { font: 11px monospace; color: #4b5563; }
+.lb-row.gold   .lb-dist,
+.lb-row.silver .lb-dist,
+.lb-row.bronze .lb-dist { color: inherit; opacity: 0.6; }
+.lb-row.me .lb-dist { color: #4ade80; opacity: 0.7; }
+
+.lb-score { color: #22c55e; font: bold 15px monospace; flex-shrink: 0; letter-spacing: 0.03em; }
+
+.lb-badword { color: #ef4444; font: bold 11px monospace; letter-spacing: 0.05em; }
 
 .lb-empty {
   text-align: center;

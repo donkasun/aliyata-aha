@@ -1,5 +1,6 @@
 // src/render.js
 import { IMAGE_SRC, VIEWBOX } from './elephant.js';
+import { isBadName }          from './name-filter.js';
 
 const BG_COLOR   = '#111827';
 const TEXT_COLOR = '#f9fafb';
@@ -132,10 +133,27 @@ function drawLeaderboard(ctx, leaderboard, canvasW, canvasH) {
     const rowY = PY + 54 + i * 34;
     const rank = medals[i] ?? `${i + 1}.`;
 
-    ctx.textAlign    = 'left';
-    ctx.font         = '14px monospace';
-    ctx.fillStyle    = i === 0 ? '#f59e0b' : TEXT_COLOR;
-    ctx.fillText(`${rank}  ${entry.displayName ?? 'Anonymous'}`, PX + 16, rowY);
+    const rawName = entry.displayName ?? 'Anonymous';
+    ctx.textAlign = 'left';
+    ctx.font      = '14px monospace';
+    ctx.fillStyle = i === 0 ? '#f59e0b' : TEXT_COLOR;
+    if (isBadName(rawName)) {
+      // Strikethrough via manual line, then [BAD WORD] label.
+      const nameX = PX + 16 + ctx.measureText(`${rank}  `).width;
+      ctx.fillText(`${rank}  ${rawName}`, PX + 16, rowY);
+      const nameW = ctx.measureText(rawName).width;
+      ctx.beginPath();
+      ctx.moveTo(nameX, rowY - 4);
+      ctx.lineTo(nameX + nameW, rowY - 4);
+      ctx.strokeStyle = TEXT_COLOR;
+      ctx.lineWidth   = 1.5;
+      ctx.stroke();
+      ctx.fillStyle = '#ef4444';
+      ctx.font      = 'bold 11px monospace';
+      ctx.fillText('[BAD WORD]', nameX + nameW + 6, rowY);
+    } else {
+      ctx.fillText(`${rank}  ${rawName}`, PX + 16, rowY);
+    }
 
     ctx.textAlign    = 'right';
     ctx.fillStyle    = '#22c55e';
