@@ -1,5 +1,5 @@
 // src/score.js — score calculation, Firestore submission, leaderboard subscription.
-import { db, auth } from './firebase.js';
+import { db, auth, isDev } from './firebase.js';
 import {
   doc, collection, query, orderBy, limit,
   onSnapshot, setDoc, runTransaction, increment, serverTimestamp,
@@ -15,6 +15,7 @@ export function calcScore(distance, timeTaken) {
 // Each player has one document in `players/` keyed by uid.
 // We update it transactionally so only the personal best is kept.
 export async function submitScore({ displayName, distance, timeTaken, seed }) {
+  if (isDev) { console.log('[dev] score not submitted:', { displayName, distance, timeTaken }); return null; }
   const uid = auth.currentUser?.uid;
   if (!uid || !displayName) return null;
 

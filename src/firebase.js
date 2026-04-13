@@ -22,5 +22,10 @@ const analytics  = getAnalytics(app);  // auto-tracks page_view, session, engage
 // Silently establishes a persistent anonymous uid on every page load.
 signInAnonymously(auth).catch(console.error);
 
-// Convenience wrapper used by game.js.
-export const track = (event, params = {}) => logEvent(analytics, event, params);
+export const isDev = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+
+// Convenience wrapper — silenced in local dev to keep Analytics clean.
+export const track = (event, params = {}) => {
+  if (isDev) return;
+  logEvent(analytics, event, params);
+};
