@@ -1,12 +1,12 @@
 // src/game.js
 import { createMouseInput } from './input-mouse.js';
 import { createHandInput }  from './input-hand.js';
-import { draw }             from './render.js';
+import { draw, idleButtonLayout } from './render.js';
 import { generateSeed, generateTransform, getEyeWorld } from './board.js';
 import { createPlayer }        from './audio.js';
 import { getMessage }          from './messages.js';
 import { getName, setName }    from './name-store.js';
-import { submitScore, subscribeLeaderboard } from './score.js';
+import { submitScore, subscribeLeaderboard, isNameTaken } from './score.js';
 import { track }               from './firebase.js';
 
 const canvas = document.getElementById('game-canvas');
@@ -53,26 +53,74 @@ tryPlayMusic();
 window.addEventListener('keydown', () => { tryPlayMusic(); }, { once: true });
 window.addEventListener('click', () => { tryPlayMusic(); }, { once: true });
 
+// ─── How to Play overlay (shown once per browser) ────────────────────────────
+
+const introOverlay = document.getElementById('intro-overlay');
+const introConfirm = document.getElementById('intro-confirm');
+
+function showIntro() {
+  introOverlay.classList.remove('hidden');
+  // Re-attach one-time keyboard dismiss each time overlay opens.
+  document.addEventListener('keydown', function onIntroKey(e) {
+    if (document.activeElement?.tagName === 'INPUT') return;
+    if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') {
+      e.preventDefault();
+      dismissIntro();
+      document.removeEventListener('keydown', onIntroKey);
+    }
+  });
+}
+
+function dismissIntro() {
+  introOverlay.classList.add('hidden');
+  tryPlayMusic();
+}
+
+// Always show on page load.
+introConfirm.addEventListener('click', dismissIntro);
+showIntro();
+
+// Help button in tab bar re-opens instructions any time.
+document.getElementById('btn-help').addEventListener('click', showIntro);
+
 // ─── Name overlay ────────────────────────────────────────────────────────────
 
 const nameOverlay  = document.getElementById('name-overlay');
 const nameInput    = document.getElementById('name-input');
+const nameError    = document.getElementById('name-error');
 const nameConfirm  = document.getElementById('name-confirm');
 
 function showNamePrompt(onDone) {
-  nameInput.value = getName();
+  nameInput.value   = getName();
+  nameError.textContent = '';
   nameOverlay.classList.remove('hidden');
   nameInput.focus();
 
-  function confirm() {
+  async function confirm() {
     const name = nameInput.value.trim();
     if (!name) return;
+
+    nameConfirm.disabled = true;
+    nameError.textContent = '';
+
+    const { auth } = await import('./firebase.js');
+    const uid = auth.currentUser?.uid;
+
+    if (await isNameTaken(name, uid)) {
+      nameError.textContent = 'That name is already taken — try another!';
+      nameConfirm.disabled = false;
+      nameInput.focus();
+      return;
+    }
+
     setName(name);
     nameOverlay.classList.add('hidden');
+    nameConfirm.disabled = false;
     nameConfirm.removeEventListener('click', confirm);
     nameInput.removeEventListener('keydown', onEnter);
     onDone(name);
   }
+
   function onEnter(e) { if (e.key === 'Enter') confirm(); }
 
   nameConfirm.addEventListener('click', confirm);
@@ -84,7 +132,120 @@ function showNamePrompt(onDone) {
 let leaderboard     = [];
 let showLeaderboard = false;
 
-subscribeLeaderboard((rows) => { leaderboard = rows; });
+const lbRowsEl = document.getElementById('lb-rows');
+const MEDALS   = ['🥇', '🥈', '🥉'];
+
+function renderHtmlLeaderboard(rows) {
+  if (!lbRowsEl) return;
+  lbRowsEl.textContent = ''; // clear previous rows
+
+  if (!rows.length) {
+    const empty = document.createElement('div');
+    empty.className   = 'lb-empty';
+    empty.textContent = 'No scores yet — be the first!';
+    lbRowsEl.appendChild(empty);
+    return;
+  }
+
+  rows.forEach((entry, i) => {
+    const row = document.createElement('div');
+    row.className = 'lb-row' + (i === 0 ? ' gold' : i === 1 ? ' silver' : i === 2 ? ' bronze' : '');
+
+    const rank = document.createElement('span');
+    rank.className   = 'lb-rank';
+    rank.textContent = MEDALS[i] ?? `${i + 1}.`;
+
+    const name = document.createElement('span');
+    name.className   = 'lb-name';
+    name.textContent = entry.displayName ?? 'Anonymous';
+
+    const score = document.createElement('span');
+    score.className   = 'lb-score';
+    score.textContent = String(entry.bestScore ?? 0);
+
+    row.appendChild(rank);
+    row.appendChild(name);
+    row.appendChild(score);
+    lbRowsEl.appendChild(row);
+  });
+}
+
+subscribeLeaderboard((rows) => {
+  leaderboard = rows;
+  renderHtmlLeaderboard(rows);
+});
+
+// ─── HTML state overlays (status bar + result actions) ────────────────────────
+
+const gameStatus    = document.getElementById('game-status');
+const statusLabel   = document.getElementById('status-label');
+const statusSub     = document.getElementById('status-sub');
+const statusMsg     = document.getElementById('status-msg');
+const resultActions = document.getElementById('result-actions');
+
+function syncHtmlOverlays() {
+  const isHidden = state === 'HIDDEN';
+  const isResult = state === 'RESULT';
+
+  gameStatus.classList.toggle('hidden', !isHidden && !isResult);
+  resultActions.classList.toggle('hidden', !isResult);
+
+  if (isHidden) {
+    gameStatus.classList.add('mode-hint');
+    statusLabel.className   = 'status-hint';
+    statusLabel.textContent = mode === 'hand'
+      ? 'Where is the eye? Pinch to confirm.'
+      : 'Where is the eye? Click or SPACE to confirm.';
+    statusSub.textContent = '';
+    statusMsg.textContent = '';
+  } else if (isResult && round) {
+    gameStatus.classList.remove('mode-hint');
+    statusLabel.className   = round.hit ? 'status-hit' : 'status-miss';
+    statusLabel.textContent = round.hit ? 'HIT!' : 'MISS';
+    statusSub.textContent   = `${round.distance}px off`;
+    statusMsg.textContent   = round.message ?? '';
+  }
+}
+
+// Wire result action buttons via event delegation.
+resultActions.addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-action]');
+  if (!btn) return;
+  const action = btn.dataset.action;
+  if (action === 'again') {
+    transition('REVEAL');
+  } else if (action === 'mouse') {
+    if (mode === 'hand' && handInput) handInput.stop();
+    mode = 'mouse'; input = mouseInput; transition('REVEAL');
+  } else if (action === 'camera') {
+    switchToHand();
+  } else if (action === 'board') {
+    showLeaderboard = !showLeaderboard;
+  } else if (action === 'name') {
+    showNamePrompt((name) => {
+      submitScore({ displayName: name, distance: round.distance, timeTaken: round.timeTaken, seed: round.seed }).catch(console.error);
+    });
+  }
+});
+
+// ─── Tab bar ──────────────────────────────────────────────────────────────────
+
+const gameView = document.getElementById('game-view');
+const lbView   = document.getElementById('leaderboard-view');
+
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    if (tab.dataset.tab === 'game') {
+      gameView.classList.remove('hidden');
+      lbView.classList.add('hidden');
+    } else {
+      gameView.classList.add('hidden');
+      lbView.classList.remove('hidden');
+    }
+  });
+});
 
 // ─── Mode ────────────────────────────────────────────────────────────────────
 
@@ -189,11 +350,59 @@ function transition(newState) {
       submit(getName());
     }
   }
+
+  syncHtmlOverlays();
 }
+
+// ─── Canvas click / hover helpers ────────────────────────────────────────────
+
+/** Convert a MouseEvent into canvas-pixel coordinates (accounts for CSS scaling). */
+function canvasCoords(e) {
+  const rect = canvas.getBoundingClientRect();
+  return {
+    x: (e.clientX - rect.left)  * (canvas.width  / rect.width),
+    y: (e.clientY - rect.top)   * (canvas.height / rect.height),
+  };
+}
+
+/** Return the id of the button hit by (px, py), or null. */
+function hitButton(buttons, px, py) {
+  for (const btn of buttons) {
+    if (px >= btn.x && px <= btn.x + btn.w && py >= btn.y && py <= btn.y + btn.h) return btn.id;
+  }
+  return null;
+}
+
+canvas.addEventListener('click', (e) => {
+  const { x, y } = canvasCoords(e);
+
+  if (state === 'IDLE') {
+    const hit = hitButton(idleButtonLayout(canvas.width, canvas.height), x, y);
+    if (hit === 'mouse') {
+      if (mode === 'hand' && handInput) handInput.stop();
+      mode = 'mouse'; input = mouseInput; transition('REVEAL');
+    } else if (hit === 'camera') {
+      switchToHand();
+    }
+    return;
+  }
+
+  if (state === 'HIDDEN') {
+    // Clicking anywhere commits the guess (alternative to SPACE / pinch).
+    handleCommit();
+  }
+});
+
+canvas.addEventListener('mousemove', (e) => {
+  if (state !== 'IDLE') return;
+  const { x, y } = canvasCoords(e);
+  canvas.style.cursor = hitButton(idleButtonLayout(canvas.width, canvas.height), x, y) ? 'pointer' : 'default';
+});
 
 // ─── Mode switching (M / C keys, IDLE only) ──────────────────────────────────
 
 window.addEventListener('keydown', (e) => {
+  if (document.activeElement?.tagName === 'INPUT') return;
   if (e.code === 'KeyL' && state === 'RESULT') {
     showLeaderboard = !showLeaderboard;
     return;
@@ -238,7 +447,7 @@ async function switchToHand() {
 // ─── Render loop ──────────────────────────────────────────────────────────────
 
 function loop() {
-  draw(ctx, { state, round, debugMode: input.isDebugMode(), mode, cameraErrorMsg, handInput, leaderboard, showLeaderboard });
+  draw(ctx, { state, round, mode, cameraErrorMsg, handInput, leaderboard, showLeaderboard });
   requestAnimationFrame(loop);
 }
 

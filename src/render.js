@@ -4,6 +4,17 @@ import { IMAGE_SRC, VIEWBOX } from './elephant.js';
 const BG_COLOR   = '#111827';
 const TEXT_COLOR = '#f9fafb';
 
+// ─── Button layout helpers (exported for hit-testing in game.js) ──────────────
+
+export function idleButtonLayout(width, height) {
+  const cx = width / 2, cy = height / 2;
+  const W = 130, H = 40;
+  return [
+    { id: 'mouse',  label: '[M] Mouse',  x: cx - 80 - W / 2, y: cy + 20 - H / 2, w: W, h: H },
+    { id: 'camera', label: '[C] Camera', x: cx + 80 - W / 2, y: cy + 20 - H / 2, w: W, h: H },
+  ];
+}
+
 // Pre-load elephant image once at module load.
 const elephantImg = new Image();
 elephantImg.src = IMAGE_SRC;
@@ -141,7 +152,7 @@ function drawLeaderboard(ctx, leaderboard, canvasW, canvasH) {
 
 // ─── Main draw function ───────────────────────────────────────────────────────
 
-export function draw(ctx, { state, round, debugMode, mode, cameraErrorMsg, handInput, leaderboard = [], showLeaderboard = false }) {
+export function draw(ctx, { state, round, mode, cameraErrorMsg, handInput, leaderboard = [], showLeaderboard = false }) {
   const { width, height } = ctx.canvas;
 
   // Clear
@@ -156,12 +167,22 @@ export function draw(ctx, { state, round, debugMode, mode, cameraErrorMsg, handI
     ctx.font      = '32px sans-serif';
     ctx.fillText('Aliyata Asa Thabeema', width / 2, height / 2 - 30);
 
-    // Mode selector — pressing M or C selects mode and starts immediately
-    ctx.font      = '18px monospace';
-    ctx.fillStyle = mode === 'mouse' ? '#f59e0b' : '#78350f';
-    ctx.fillText('[M] Mouse',  width / 2 - 80, height / 2 + 20);
-    ctx.fillStyle = mode === 'hand' ? '#f59e0b' : '#78350f';
-    ctx.fillText('[C] Camera', width / 2 + 80, height / 2 + 20);
+    // Mode selector buttons — clickable or keyboard [M] / [C]
+    for (const btn of idleButtonLayout(width, height)) {
+      const active = (btn.id === 'mouse' && mode === 'mouse') || (btn.id === 'camera' && mode === 'hand');
+      // Outline
+      ctx.beginPath();
+      ctx.roundRect(btn.x, btn.y, btn.w, btn.h, 5);
+      ctx.strokeStyle = active ? '#f59e0b' : '#374151';
+      ctx.lineWidth   = 1.5;
+      ctx.stroke();
+      // Label
+      ctx.font         = '18px monospace';
+      ctx.textAlign    = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle    = active ? '#f59e0b' : '#78350f';
+      ctx.fillText(btn.label, btn.x + btn.w / 2, btn.y + btn.h / 2);
+    }
 
     if (cameraErrorMsg) {
       ctx.fillStyle = '#ef4444';
@@ -179,22 +200,6 @@ export function draw(ctx, { state, round, debugMode, mode, cameraErrorMsg, handI
   }
 
   if (state === 'HIDDEN') {
-    // Debug mode: show elephant faintly so you can verify coordinate accuracy.
-    if (debugMode && round?.transform) {
-      ctx.save();
-      ctx.globalAlpha = 0.25;
-      drawElephant(ctx, round.transform);
-      ctx.restore();
-    }
-
-    // Instruction text
-    ctx.fillStyle    = TEXT_COLOR;
-    ctx.font         = '20px monospace';
-    ctx.textAlign    = 'center';
-    ctx.textBaseline = 'top';
-    const hint = mode === 'hand' ? 'Where is the eye? Pinch to confirm.' : 'Where is the eye? Press SPACE to confirm.';
-    ctx.fillText(hint, width / 2, 20);
-
     // Hand cursor on main canvas — draws crosshair at fingertip world position.
     if (mode === 'hand' && handInput) {
       const { x, y } = handInput.getCursor();
@@ -242,27 +247,6 @@ export function draw(ctx, { state, round, debugMode, mode, cameraErrorMsg, handI
     ctx.arc(g.x, g.y, 4, 0, Math.PI * 2);
     ctx.fillStyle = '#ef4444';
     ctx.fill();
-
-    // HIT / MISS label.
-    ctx.font         = 'bold 36px monospace';
-    ctx.textAlign    = 'left';
-    ctx.textBaseline = 'top';
-    ctx.fillStyle    = round.hit ? '#f59e0b' : '#ef4444';
-    ctx.fillText(round.hit ? 'HIT!' : 'MISS', 20, 20);
-
-    // Distance (below label).
-    ctx.fillStyle = TEXT_COLOR;
-    ctx.font      = '18px monospace';
-    ctx.fillText(`${round.distance}px off`, 20, 66);
-
-    // Sinhala message
-    ctx.font      = '20px sans-serif';
-    ctx.fillStyle = TEXT_COLOR;
-    ctx.fillText(round.message, 20, 100);
-
-    // Instruction.
-    ctx.font = '16px monospace';
-    ctx.fillText('SPACE  [M] Mouse  [C] Camera  [L] Board  [N] Name', 20, 130);
 
     // Leaderboard overlay (toggled with L key).
     if (showLeaderboard) drawLeaderboard(ctx, leaderboard, width, height);
