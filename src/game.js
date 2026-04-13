@@ -17,11 +17,24 @@ function updateTrackName() {
 }
 
 const btnPlay = document.getElementById('btn-play');
-btnPlay.textContent = player.isPaused() ? '▶' : '⏸';
+
+function syncPlayButton() {
+  btnPlay.textContent = player.isPaused() ? '▶' : '⏸';
+}
+
+/** Starts playback; resolves when playing or rejects if the browser blocks autoplay. */
+function tryPlayMusic() {
+  return player.play().then(() => {
+    updateTrackName();
+    syncPlayButton();
+  }).catch(() => {
+    syncPlayButton();
+  });
+}
 
 btnPlay.addEventListener('click', () => {
   player.toggle();
-  btnPlay.textContent = player.isPaused() ? '▶' : '⏸';
+  syncPlayButton();
 });
 document.getElementById('btn-prev').addEventListener('click', () => { player.prev(); updateTrackName(); });
 document.getElementById('btn-next').addEventListener('click', () => { player.next(); updateTrackName(); });
@@ -29,11 +42,13 @@ document.getElementById('vol-slider').addEventListener('input', (e) => {
   player.setVolume(e.target.value / 100);
 });
 
-// Auto-play on first user interaction (browser autoplay policy).
-window.addEventListener('keydown', () => { player.play(); updateTrackName(); btnPlay.textContent = player.isPaused() ? '▶' : '⏸'; }, { once: true });
-window.addEventListener('click', () => { player.play(); updateTrackName(); btnPlay.textContent = player.isPaused() ? '▶' : '⏸'; }, { once: true });
-
 updateTrackName();
+syncPlayButton();
+tryPlayMusic();
+
+// If autoplay was blocked, first key press or click still starts playback.
+window.addEventListener('keydown', () => { tryPlayMusic(); }, { once: true });
+window.addEventListener('click', () => { tryPlayMusic(); }, { once: true });
 
 // ─── Mode ────────────────────────────────────────────────────────────────────
 
@@ -102,10 +117,11 @@ function transition(newState) {
     const dy       = round.guess.y - round.trueEyeWorld.y;
     round.distance = Math.round(Math.sqrt(dx * dx + dy * dy));
     round.hit      = round.distance <= 12;
-    round.message  = getMessage(round.distance, round.hit);
 
     const gx = Math.round((round.guess.x - round.transform.offsetX) / round.transform.scale);
     const gy = Math.round((round.guess.y - round.transform.offsetY) / round.transform.scale);
+    round.message  = getMessage(round.distance, round.hit, dx, dy, gx, gy);
+    if (round.hit) new Audio('sounds/Koha.mp3').play().catch(() => {});
     console.log(`Seed: ${round.seed} | Distance: ${round.distance}px | EYE_SVG: { x: ${gx}, y: ${gy} }`);
   }
 }
