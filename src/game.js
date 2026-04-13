@@ -4,6 +4,7 @@ import { createHandInput }  from './input-hand.js';
 import { draw }             from './render.js';
 import { generateSeed, generateTransform, getEyeWorld } from './board.js';
 import { createPlayer } from './audio.js';
+import { getMessage }   from './messages.js';
 
 const canvas = document.getElementById('game-canvas');
 const ctx    = canvas.getContext('2d');
@@ -101,6 +102,7 @@ function transition(newState) {
     const dy       = round.guess.y - round.trueEyeWorld.y;
     round.distance = Math.round(Math.sqrt(dx * dx + dy * dy));
     round.hit      = round.distance <= 12;
+    round.message  = getMessage(round.distance, round.hit);
 
     const gx = Math.round((round.guess.x - round.transform.offsetX) / round.transform.scale);
     const gy = Math.round((round.guess.y - round.transform.offsetY) / round.transform.scale);

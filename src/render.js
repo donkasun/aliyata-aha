@@ -1,6 +1,5 @@
 // src/render.js
 import { IMAGE_SRC, VIEWBOX } from './elephant.js';
-import { getMessage } from './messages.js';
 
 const BG_COLOR   = '#111827';
 const TEXT_COLOR = '#f9fafb';
@@ -206,7 +205,7 @@ export function draw(ctx, { state, round, debugMode, mode, cameraErrorMsg, handI
     // Sinhala message
     ctx.font      = '20px sans-serif';
     ctx.fillStyle = TEXT_COLOR;
-    ctx.fillText(getMessage(round.distance, round.hit), 20, 100);
+    ctx.fillText(round.message, 20, 100);
 
     // Instruction.
     ctx.font = '16px monospace';

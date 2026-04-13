@@ -26,7 +26,7 @@ export function createPlayer() {
     audio.load();
   }
 
-  audio.addEventListener('ended', () => load(index + 1));
+  audio.addEventListener('ended', () => { load(index + 1); audio.play().catch(() => {}); });
   load(0);
 
   return {
