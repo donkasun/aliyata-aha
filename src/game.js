@@ -1,7 +1,7 @@
 // src/game.js
 import { createMouseInput } from './input-mouse.js';
 import { createHandInput }  from './input-hand.js';
-import { draw, idleButtonLayout } from './render.js';
+import { draw } from './render.js';
 import { generateSeed, generateTransform, getEyeWorld } from './board.js';
 import { createPlayer }        from './audio.js';
 import { getMessage }          from './messages.js';
@@ -196,6 +196,7 @@ const gameStatus      = document.getElementById('game-status');
 const statusLabel     = document.getElementById('status-label');
 const statusSub       = document.getElementById('status-sub');
 const statusMsg       = document.getElementById('status-msg');
+const idleActions     = document.getElementById('idle-actions');
 const resultActions   = document.getElementById('result-actions');
 const tapConfirmWrap  = document.getElementById('tap-confirm-wrap');
 
@@ -203,12 +204,33 @@ document.getElementById('tap-confirm').addEventListener('click', () => {
   if (state === 'HIDDEN') handleCommit();
 });
 
+// Wire idle mode buttons (HTML, shown below canvas in IDLE state).
+idleActions.addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-idle]');
+  if (!btn) return;
+  if (btn.dataset.idle === 'mouse') {
+    if (mode === 'hand' && handInput) handInput.stop();
+    mode = 'mouse'; input = mouseInput; transition('REVEAL');
+  } else if (btn.dataset.idle === 'camera') {
+    switchToHand();
+  }
+});
+
 function syncHtmlOverlays() {
+  const isIdle   = state === 'IDLE';
   const isHidden = state === 'HIDDEN';
   const isResult = state === 'RESULT';
 
+  idleActions.classList.toggle('hidden', !isIdle);
   gameStatus.classList.toggle('hidden', !isHidden && !isResult);
   resultActions.classList.toggle('hidden', !isResult);
+
+  // Active styling on idle buttons
+  idleActions.querySelector('[data-idle="mouse"]').classList.toggle('active', mode === 'mouse');
+  idleActions.querySelector('[data-idle="camera"]').classList.toggle('active', mode === 'hand');
+
+  // Label [T] Tap vs 🖱️ Mouse based on device
+  idleActions.querySelector('[data-idle="mouse"]').textContent = isMobile ? '👆 Tap' : '🖱️ Mouse';
 
   // Show tap confirm only on mobile in HIDDEN state (tap mode, not hand/camera)
   tapConfirmWrap.classList.toggle('hidden', !(isHidden && isMobile && mode === 'mouse'));
@@ -383,52 +405,14 @@ function transition(newState) {
 
 // ─── Canvas click / hover helpers ────────────────────────────────────────────
 
-/** Convert a MouseEvent into canvas-pixel coordinates (accounts for CSS scaling). */
-function canvasCoords(e) {
-  const rect = canvas.getBoundingClientRect();
-  return {
-    x: (e.clientX - rect.left)  * (canvas.width  / rect.width),
-    y: (e.clientY - rect.top)   * (canvas.height / rect.height),
-  };
-}
-
-/** Return the id of the button hit by (px, py), or null. */
-function hitButton(buttons, px, py) {
-  for (const btn of buttons) {
-    if (px >= btn.x && px <= btn.x + btn.w && py >= btn.y && py <= btn.y + btn.h) return btn.id;
-  }
-  return null;
-}
-
-canvas.addEventListener('click', (e) => {
-  // On touch devices the touchstart/touchmove already set position;
-  // commit is via the explicit #tap-confirm button — not canvas click.
-  if (isMobile && mode === 'mouse') return;
-
-  const { x, y } = canvasCoords(e);
-
-  if (state === 'IDLE') {
-    const hit = hitButton(idleButtonLayout(canvas.width, canvas.height, isMobile), x, y);
-    if (hit === 'mouse') {
-      if (mode === 'hand' && handInput) handInput.stop();
-      mode = 'mouse'; input = mouseInput; transition('REVEAL');
-    } else if (hit === 'camera') {
-      switchToHand();
-    }
-    return;
-  }
-
-  if (state === 'HIDDEN') {
-    // Desktop: clicking anywhere on canvas commits the guess.
+canvas.addEventListener('click', () => {
+  // IDLE buttons are now HTML — no canvas click handling needed in IDLE.
+  // On mobile in tap mode, commit is via the explicit #tap-confirm button.
+  if (state === 'HIDDEN' && !(isMobile && mode === 'mouse')) {
     handleCommit();
   }
 });
 
-canvas.addEventListener('mousemove', (e) => {
-  if (state !== 'IDLE') return;
-  const { x, y } = canvasCoords(e);
-  canvas.style.cursor = hitButton(idleButtonLayout(canvas.width, canvas.height, isMobile), x, y) ? 'pointer' : 'default';
-});
 
 // ─── Mode switching (M / C keys, IDLE only) ──────────────────────────────────
 
@@ -483,3 +467,6 @@ function loop() {
 }
 
 requestAnimationFrame(loop);
+
+// Initialise HTML overlay state for the starting IDLE state.
+syncHtmlOverlays();

@@ -163,31 +163,14 @@ export function draw(ctx, { state, round, mode, cameraErrorMsg, handInput, leade
     ctx.textAlign    = 'center';
     ctx.textBaseline = 'middle';
 
-    ctx.fillStyle = '#f59e0b';  // gold
+    ctx.fillStyle = '#f59e0b';
     ctx.font      = '32px sans-serif';
-    ctx.fillText('Aliyata Asa Thabeema', width / 2, height / 2 - 30);
-
-    // Mode selector buttons — clickable or keyboard [M]/[T] / [C]
-    for (const btn of idleButtonLayout(width, height, isMobile)) {
-      const active = (btn.id === 'mouse' && mode === 'mouse') || (btn.id === 'camera' && mode === 'hand');
-      // Outline
-      ctx.beginPath();
-      ctx.roundRect(btn.x, btn.y, btn.w, btn.h, 5);
-      ctx.strokeStyle = active ? '#f59e0b' : '#374151';
-      ctx.lineWidth   = 1.5;
-      ctx.stroke();
-      // Label
-      ctx.font         = '18px monospace';
-      ctx.textAlign    = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillStyle    = active ? '#f59e0b' : '#78350f';
-      ctx.fillText(btn.label, btn.x + btn.w / 2, btn.y + btn.h / 2);
-    }
+    ctx.fillText('Aliyata Asa Thabeema', width / 2, height / 2);
 
     if (cameraErrorMsg) {
       ctx.fillStyle = '#ef4444';
       ctx.font      = '16px monospace';
-      ctx.fillText(cameraErrorMsg, width / 2, height / 2 + 60);
+      ctx.fillText(cameraErrorMsg, width / 2, height / 2 + 50);
     }
 
     return;

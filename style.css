@@ -147,6 +147,35 @@ canvas {
 
 #result-actions button:hover { color: #f59e0b; border-color: #f59e0b; }
 
+/* ── Idle mode buttons (below canvas in IDLE state) ──────────────────────── */
+#idle-actions {
+  display: flex;
+  gap: 12px;
+  padding: 12px 2px 4px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+#idle-actions button {
+  background: none;
+  border: 2px solid #374151;
+  color: #9ca3af;
+  font: bold 15px monospace;
+  padding: 12px 28px;
+  border-radius: 8px;
+  cursor: pointer;
+  min-height: 48px;
+  min-width: 130px;
+  letter-spacing: 0.04em;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+#idle-actions button:hover,
+#idle-actions button.active {
+  color: #f59e0b;
+  border-color: #f59e0b;
+}
+
 /* ── Tap confirm button (mobile HIDDEN state) ─────────────────────────────── */
 #tap-confirm-wrap {
   display: flex;
