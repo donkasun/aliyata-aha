@@ -60,12 +60,12 @@ export async function submitScore({ displayName, distance, timeTaken, seed }) {
   return score;
 }
 
-// Returns an unsubscribe function. Calls callback with top-10 array on every change.
+// Returns an unsubscribe function. Calls callback with top-50 array on every change.
 export function subscribeLeaderboard(callback) {
   const q = query(
     collection(db, 'players'),
     orderBy('bestScore', 'desc'),
-    limit(10),
+    limit(50),
   );
   return onSnapshot(q, (snap) => {
     callback(snap.docs.map(d => ({ uid: d.id, ...d.data() })));

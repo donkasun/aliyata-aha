@@ -53,7 +53,17 @@
     <!-- ── Leaderboard view ────────────────────────────────────────────── -->
     <div id="leaderboard-view" class="hidden">
       <div id="leaderboard-panel">
-        <h2 class="lb-title">🏆 Leaderboard</h2>
+        <div class="lb-panel-head">
+          <h2 class="lb-title">🏆 Leaderboard</h2>
+        </div>
+        <!-- Current user's personal best — always visible at top -->
+        <div id="lb-my-record" class="hidden">
+          <span class="lb-my-label">You</span>
+          <span class="lb-my-name" id="lb-my-name">—</span>
+          <span class="lb-my-rank" id="lb-my-rank"></span>
+          <span class="lb-my-score" id="lb-my-score"></span>
+        </div>
+        <div class="lb-divider"></div>
         <div id="lb-rows"></div>
       </div>
     </div>
